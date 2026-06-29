@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
@@ -30,14 +30,24 @@ export default function LoginPage() {
   const confirmationRef = useRef<any>(null);
   const recaptchaVerifierRef = useRef<any>(null);
 
-  const setupRecaptcha = async () => {
-    const { RecaptchaVerifier } = await import('firebase/auth');
-    const { auth } = await import('@/lib/firebase');
-    if (!recaptchaVerifierRef.current) {
-      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
-    }
-    return recaptchaVerifierRef.current;
-  };
+  // Initialize reCAPTCHA on mount so it's ready before the user clicks
+  useEffect(() => {
+    let cancelled = false;
+    const init = async () => {
+      try {
+        const { RecaptchaVerifier } = await import('firebase/auth');
+        const { auth } = await import('@/lib/firebase');
+        if (cancelled || recaptchaVerifierRef.current) return;
+        const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
+        await verifier.render();
+        recaptchaVerifierRef.current = verifier;
+      } catch (e) {
+        console.warn('[reCAPTCHA init error]', e);
+      }
+    };
+    init();
+    return () => { cancelled = true; };
+  }, []);
 
   const handleSendOtp = async () => {
     if (phone.length !== 10) return;
@@ -45,13 +55,14 @@ export default function LoginPage() {
     try {
       const { signInWithPhoneNumber } = await import('firebase/auth');
       const { auth } = await import('@/lib/firebase');
-      console.log('[Firebase config check]', {
-        apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY?.slice(0, 10) + '...',
-        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-        appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-      });
-      const verifier = await setupRecaptcha();
+
+      if (!recaptchaVerifierRef.current) {
+        const { RecaptchaVerifier } = await import('firebase/auth');
+        recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
+        await recaptchaVerifierRef.current.render();
+      }
+
+      const verifier = recaptchaVerifierRef.current;
       const confirmation = await signInWithPhoneNumber(auth, `+91${phone}`, verifier);
       confirmationRef.current = confirmation;
       setStep('otp');
