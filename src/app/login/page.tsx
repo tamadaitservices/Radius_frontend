@@ -45,6 +45,12 @@ export default function LoginPage() {
     try {
       const { signInWithPhoneNumber } = await import('firebase/auth');
       const { auth } = await import('@/lib/firebase');
+      console.log('[Firebase config check]', {
+        apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY?.slice(0, 10) + '...',
+        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+        appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+      });
       const verifier = await setupRecaptcha();
       const confirmation = await signInWithPhoneNumber(auth, `+91${phone}`, verifier);
       confirmationRef.current = confirmation;
