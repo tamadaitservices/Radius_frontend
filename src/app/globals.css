@@ -1,0 +1,216 @@
+@import "tailwindcss";
+
+:root {
+  --ry-green: #0c831f;
+  --ry-green-light: #f0faf1;
+  --ry-orange: #e84d0e;
+  --ry-orange-light: #fff4f0;
+  --ry-border: #e8e8e8;
+
+  /* Light mode */
+  --background: #ffffff;
+  --foreground: #1a1a1a;
+  --surface: #f9fafb;
+  --surface-2: #f2f4f6;
+  --text-muted: #6b7280;
+  --text-subtle: #9ca3af;
+  --border: #e5e7eb;
+  --input-bg: #f9fafb;
+  --header-bg: rgba(255, 255, 255, 0.95);
+  --category-bg: #e8f5e9;
+  --footer-bg: #111827;
+  --footer-text: #d1d5db;
+  --footer-text-muted: #6b7280;
+  --footer-border: #1f2937;
+  --footer-heading: #ffffff;
+}
+
+.dark {
+  --background: #000000;
+  --foreground: #ffffff;
+  --surface: #111111;
+  --surface-2: #1a1a1a;
+  --text-muted: #a3a3a3;
+  --text-subtle: #737373;
+  --border: #2a2a2a;
+  --input-bg: #111111;
+  --header-bg: rgba(0, 0, 0, 0.95);
+  --category-bg: #1a1a1a;
+  --footer-bg: #000000;
+  --footer-text: #a3a3a3;
+  --footer-text-muted: #525252;
+  --footer-border: #1a1a1a;
+  --footer-heading: #ffffff;
+  --ry-green-light: #0a1a0a;
+  --ry-border: #2a2a2a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #ccc; border-radius: 2px; }
+.dark ::-webkit-scrollbar-thumb { background: #333333; }
+
+/* Hide scrollbar for horizontal scroll containers */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Dark mode: override common Tailwind utility classes ── */
+.dark .bg-white       { background-color: var(--surface) !important; }
+.dark .bg-gray-50     { background-color: var(--surface) !important; }
+.dark .bg-gray-100    { background-color: var(--surface-2) !important; }
+.dark .bg-gray-200    { background-color: var(--border) !important; }
+.dark .bg-orange-50   { background-color: #1a1a1a !important; }
+.dark .bg-green-50    { background-color: #111111 !important; }
+.dark .bg-green-100   { background-color: #1a1a1a !important; }
+.dark .bg-red-50      { background-color: #1a1a1a !important; }
+.dark .bg-red-100     { background-color: #1a1a1a !important; }
+.dark .bg-blue-50     { background-color: #111111 !important; }
+.dark .bg-purple-100  { background-color: #1a1a1a !important; }
+.dark .bg-yellow-50   { background-color: #111111 !important; }
+.dark .bg-pink-50     { background-color: #1a1a1a !important; }
+
+.dark .text-gray-900  { color: var(--foreground) !important; }
+.dark .text-gray-800  { color: var(--foreground) !important; }
+.dark .text-gray-700  { color: var(--text-muted) !important; }
+.dark .text-gray-600  { color: var(--text-muted) !important; }
+.dark .text-gray-500  { color: var(--text-subtle) !important; }
+.dark .text-gray-400  { color: var(--text-subtle) !important; }
+
+.dark .border-gray-100 { border-color: var(--border) !important; }
+.dark .border-gray-200 { border-color: var(--border) !important; }
+.dark .border-gray-300 { border-color: var(--border) !important; }
+
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: var(--surface-2) !important;
+  color: var(--foreground) !important;
+  border-color: var(--border) !important;
+}
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: var(--text-subtle) !important;
+}
+
+/* ── Panel theme isolation ──────────────────────────────────────────────────
+   Both admin and vendor panels carry class="ry-panel" on their root div.
+   These rules override the site's .dark overrides so each panel can manage
+   its own light/dark mode independently via the .panel-dark class.
+   CSS specificity: .ry-panel .bg-white beats .dark .bg-white (same weight,
+   but panels append their rules after site rules so they win). */
+
+.ry-panel {
+  --pc-bg:      #f0f4f8;
+  --pc-card:    #ffffff;
+  --pc-border:  #e5e7eb;
+  --pc-text:    #111827;
+  --pc-muted:   #6b7280;
+  --pc-subtle:  #9ca3af;
+  --pc-input:   #ffffff;
+  --pc-input-ph:#9ca3af;
+}
+.ry-panel.panel-dark {
+  --pc-bg:      #000000;
+  --pc-card:    #111111;
+  --pc-border:  #2a2a2a;
+  --pc-text:    #ffffff;
+  --pc-muted:   #a3a3a3;
+  --pc-subtle:  #737373;
+  --pc-input:   #1a1a1a;
+  --pc-input-ph:#525252;
+}
+
+/* Background resets */
+.ry-panel .bg-white          { background-color: var(--pc-card)   !important; }
+.ry-panel .bg-gray-50        { background-color: var(--pc-bg)     !important; }
+.ry-panel .bg-gray-100       { background-color: var(--pc-input)  !important; }
+.ry-panel .bg-gray-200       { background-color: var(--pc-border) !important; }
+.ry-panel .bg-orange-50      { background-color: var(--pc-input)  !important; }
+.ry-panel .bg-green-50       { background-color: var(--pc-input)  !important; }
+.ry-panel .bg-green-100      { background-color: var(--pc-input)  !important; }
+.ry-panel .bg-red-50         { background-color: var(--pc-input)  !important; }
+.ry-panel .bg-red-100        { background-color: var(--pc-input)  !important; }
+.ry-panel .bg-blue-50        { background-color: var(--pc-input)  !important; }
+.ry-panel .bg-purple-100     { background-color: var(--pc-input)  !important; }
+.ry-panel .bg-amber-100      { background-color: var(--pc-input)  !important; }
+
+/* Text resets */
+.ry-panel .text-gray-900     { color: var(--pc-text)   !important; }
+.ry-panel .text-gray-800     { color: var(--pc-text)   !important; }
+.ry-panel .text-gray-700     { color: var(--pc-muted)  !important; }
+.ry-panel .text-gray-600     { color: var(--pc-muted)  !important; }
+.ry-panel .text-gray-500     { color: var(--pc-subtle) !important; }
+.ry-panel .text-gray-400     { color: var(--pc-subtle) !important; }
+
+/* Border resets */
+.ry-panel .border-gray-100   { border-color: var(--pc-border) !important; }
+.ry-panel .border-gray-200   { border-color: var(--pc-border) !important; }
+.ry-panel .border-gray-300   { border-color: var(--pc-border) !important; }
+
+/* Input resets */
+.ry-panel input,
+.ry-panel textarea,
+.ry-panel select {
+  background-color: var(--pc-input)    !important;
+  color:            var(--pc-text)     !important;
+  border-color:     var(--pc-border)   !important;
+}
+.ry-panel input::placeholder,
+.ry-panel textarea::placeholder {
+  color: var(--pc-input-ph) !important;
+}
+
+/* Header bar inside panels */
+.ry-panel .panel-header {
+  background-color: var(--pc-card)   !important;
+  border-color:     var(--pc-border) !important;
+}
+
+/* Google Places Autocomplete dropdown — always on top of modals */
+.pac-container {
+  z-index: 9999 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15) !important;
+  border: 1px solid var(--border) !important;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.pac-item {
+  padding: 10px 14px !important;
+  font-size: 13px !important;
+  cursor: pointer !important;
+  color: var(--foreground) !important;
+}
+.pac-item:hover, .pac-item-selected {
+  background: var(--ry-green-light) !important;
+}
+.pac-item-query {
+  font-size: 13px !important;
+  color: var(--foreground) !important;
+}
+.pac-icon { display: none !important; }
+
+/* Reservation countdown pulse */
+@keyframes pulse-green {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+.pulse-green { animation: pulse-green 2s ease-in-out infinite; }
