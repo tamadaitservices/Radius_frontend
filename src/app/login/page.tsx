@@ -52,10 +52,11 @@ export default function LoginPage() {
       toast.success('OTP sent!');
     } catch (e: any) {
       const code = e?.code ?? '';
+      console.error('[OTP Error]', code, e?.message, e);
       if (code === 'auth/invalid-phone-number') toast.error('Invalid phone number.');
       else if (code === 'auth/too-many-requests') toast.error('Too many attempts. Try later.');
       else if (code.includes('app-not-configured') || code.includes('api-key')) toast.error('Firebase not configured. Contact support.');
-      else toast.error('Could not send OTP. Try again.');
+      else toast.error(`OTP failed (${code || 'unknown'}). Check console.`);
       recaptchaVerifierRef.current?.clear();
       recaptchaVerifierRef.current = null;
     } finally {
@@ -225,7 +226,6 @@ export default function LoginPage() {
                 Your number is used only for login and is never shared.
               </p>
 
-              <div id="recaptcha-container" />
             </div>
           )}
 
@@ -343,6 +343,9 @@ export default function LoginPage() {
 
         </div>
       </div>
+
+      {/* Always-mounted reCAPTCHA anchor — must stay outside conditional rendering */}
+      <div id="recaptcha-container" style={{ position: 'fixed', bottom: 0, left: 0 }} />
     </div>
   );
 }
