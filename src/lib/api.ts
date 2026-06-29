@@ -34,7 +34,10 @@ api.interceptors.response.use(
           // On subdomains /login is rewritten by middleware to the correct panel login.
           // On the main domain, send vendors to the vendor subdomain.
           const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
-          if (hostname.startsWith('admin.') || hostname.startsWith('vendor.')) {
+          const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+          if (hostname.startsWith('admin.') || pathname.startsWith('/admin')) {
+            window.location.href = '/admin/login';
+          } else if (hostname.startsWith('vendor.')) {
             window.location.href = '/login';
           } else {
             const raw = localStorage.getItem('radiuyes-auth');
