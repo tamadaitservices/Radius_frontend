@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
@@ -30,37 +30,19 @@ export default function LoginPage() {
   const confirmationRef = useRef<any>(null);
   const recaptchaVerifierRef = useRef<any>(null);
 
-  // Initialize reCAPTCHA on mount so it's ready before the user clicks
-  useEffect(() => {
-    let cancelled = false;
-    const init = async () => {
-      try {
-        const { RecaptchaVerifier } = await import('firebase/auth');
-        const { auth } = await import('@/lib/firebase');
-        if (cancelled || recaptchaVerifierRef.current) return;
-        const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
-        await verifier.render();
-        recaptchaVerifierRef.current = verifier;
-      } catch (e) {
-        console.warn('[reCAPTCHA init error]', e);
-      }
-    };
-    init();
-    return () => { cancelled = true; };
-  }, []);
-
   const handleSendOtp = async () => {
     if (phone.length !== 10) return;
     setSending(true);
     try {
-      const { signInWithPhoneNumber } = await import('firebase/auth');
+      const { signInWithPhoneNumber, RecaptchaVerifier } = await import('firebase/auth');
       const { auth } = await import('@/lib/firebase');
 
-      if (!recaptchaVerifierRef.current) {
-        const { RecaptchaVerifier } = await import('firebase/auth');
-        recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
-        await recaptchaVerifierRef.current.render();
+      // Always create a fresh verifier — reusing a cleared one causes errors
+      if (recaptchaVerifierRef.current) {
+        try { recaptchaVerifierRef.current.clear(); } catch {}
+        recaptchaVerifierRef.current = null;
       }
+      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
 
       const verifier = recaptchaVerifierRef.current;
       const confirmation = await signInWithPhoneNumber(auth, `+91${phone}`, verifier);
