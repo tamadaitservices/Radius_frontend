@@ -7,7 +7,8 @@ import {
   LayoutDashboard, Store, Users, ShoppingBag, Star, TrendingUp,
   ImagePlus, Trash2, ToggleLeft, ToggleRight, CheckCircle, XCircle,
   Loader2, LogOut, ChevronRight, Menu, X, Search,
-  MapPin, Megaphone, BookOpen, Globe, Plus, Pencil, Save, Package, Download, Sun, Moon, Settings, Eye, EyeOff
+  MapPin, Megaphone, BookOpen, Globe, Plus, Pencil, Save, Package, Download, Sun, Moon, Settings, Eye, EyeOff,
+  Bell, Send, UserCheck, Building2, UsersRound
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import AdminModal from '@/components/admin/AdminModal';
@@ -19,7 +20,7 @@ import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 
-type Section = 'dashboard' | 'vendors' | 'shops' | 'banners' | 'users' | 'reservations' | 'zones' | 'products' | 'reviews' | 'settings';
+type Section = 'dashboard' | 'vendors' | 'shops' | 'banners' | 'users' | 'reservations' | 'zones' | 'products' | 'reviews' | 'settings' | 'notifications';
 
 interface NavItem {
   id: Section;
@@ -65,6 +66,7 @@ const NAV_GROUPS = [
   {
     title: 'SYSTEM',
     items: [
+      { id: 'notifications' as Section, label: 'Push Notifications', icon: <Bell size={18} /> },
       { id: 'settings' as Section, label: 'Settings', icon: <Settings size={18} /> },
     ],
   },
@@ -212,6 +214,30 @@ export default function AdminPage() {
   const [settingsForm, setSettingsForm] = useState<Record<string, string>>({});
   const [settingsVisible, setSettingsVisible] = useState<Record<string, boolean>>({});
   const MASKED = '••••••••';
+
+  // Notifications
+  const [notifForm, setNotifForm] = useState({ title: '', body: '', target: 'all' });
+  const [notifResult, setNotifResult] = useState<{ sentCount: number; failCount: number; totalTokens: number } | null>(null);
+
+  const { data: notifLogs, isLoading: notifLoading } = useQuery({
+    queryKey: ['admin-notifications'],
+    queryFn: async () => { const r = await api.get('/api/admin/notifications'); return r.data as any[]; },
+    enabled: section === 'notifications' && user?.role === 'ADMIN',
+    refetchInterval: section === 'notifications' ? 10000 : false,
+  });
+
+  const sendNotification = useMutation({
+    mutationFn: async () => {
+      const r = await api.post('/api/admin/notifications/send', notifForm);
+      return r.data;
+    },
+    onSuccess: (data) => {
+      setNotifResult(data);
+      qc.invalidateQueries({ queryKey: ['admin-notifications'] });
+      toast.success(`Sent to ${data.sentCount} device${data.sentCount !== 1 ? 's' : ''}!`);
+    },
+    onError: (e: any) => toast.error(e.response?.data?.error || 'Failed to send notification.'),
+  });
 
   useEffect(() => {
     if (settingsData) setSettingsForm(settingsData);
@@ -1481,6 +1507,134 @@ export default function AdminPage() {
                     <span className="text-sm text-gray-500">Page {productPage} of {productsData.totalPages}</span>
                     <button onClick={() => setProductPage(p => Math.min(productsData.totalPages, p + 1))} disabled={productPage === productsData.totalPages}
                       className="px-4 py-2 rounded-xl text-sm font-bold border border-gray-200 disabled:opacity-40 hover:bg-gray-50">Next →</button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── PUSH NOTIFICATIONS ── */}
+          {section === 'notifications' && (
+            <div className="space-y-6">
+              {/* Send form */}
+              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
+                <h2 className="text-base font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+                  <Send size={18} className="text-green-600" /> Send Push Notification
+                </h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 block mb-1">Title</label>
+                    <input
+                      value={notifForm.title}
+                      onChange={(e) => setNotifForm(f => ({ ...f, title: e.target.value }))}
+                      placeholder="e.g. New shops near you!"
+                      className="w-full px-3 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:border-green-600 focus:outline-none text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-800"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 block mb-1">Message</label>
+                    <textarea
+                      value={notifForm.body}
+                      onChange={(e) => setNotifForm(f => ({ ...f, body: e.target.value }))}
+                      placeholder="e.g. Check out 5 new shops that opened in your area."
+                      rows={3}
+                      className="w-full px-3 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:border-green-600 focus:outline-none text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-800 resize-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 block mb-2">Send To</label>
+                    <div className="flex gap-3">
+                      {[
+                        { value: 'all', label: 'Everyone', icon: <UsersRound size={15} /> },
+                        { value: 'users', label: 'Customers Only', icon: <UserCheck size={15} /> },
+                        { value: 'vendors', label: 'Vendors Only', icon: <Building2 size={15} /> },
+                      ].map(opt => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setNotifForm(f => ({ ...f, target: opt.value }))}
+                          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold border-2 transition-colors ${
+                            notifForm.target === opt.value
+                              ? 'bg-green-600 text-white border-green-600'
+                              : 'text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:border-green-400'
+                          }`}
+                        >
+                          {opt.icon} {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 pt-1">
+                    <button
+                      onClick={() => { setNotifResult(null); sendNotification.mutate(); }}
+                      disabled={!notifForm.title.trim() || !notifForm.body.trim() || sendNotification.isPending}
+                      className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-white font-bold text-sm bg-green-600 hover:bg-green-700 disabled:opacity-50 transition-colors"
+                    >
+                      {sendNotification.isPending ? <><Loader2 size={14} className="animate-spin" /> Sending...</> : <><Send size={14} /> Send Now</>}
+                    </button>
+                    {notifResult && (
+                      <div className="flex items-center gap-3 text-sm">
+                        <span className="flex items-center gap-1 text-green-600 font-semibold">
+                          <CheckCircle size={15} /> {notifResult.sentCount} delivered
+                        </span>
+                        {notifResult.failCount > 0 && (
+                          <span className="flex items-center gap-1 text-red-500 font-semibold">
+                            <XCircle size={15} /> {notifResult.failCount} failed
+                          </span>
+                        )}
+                        <span className="text-gray-400 text-xs">{notifResult.totalTokens} total devices</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* History */}
+              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
+                <h2 className="text-base font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+                  <Bell size={18} className="text-green-600" /> Notification History
+                </h2>
+                {notifLoading ? (
+                  <div className="flex justify-center py-8"><Loader2 className="animate-spin text-green-600" size={24} /></div>
+                ) : !notifLogs?.length ? (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">No notifications sent yet.</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-100 dark:border-gray-700">
+                          <th className="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 pb-2 pr-4">Title</th>
+                          <th className="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 pb-2 pr-4">Message</th>
+                          <th className="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 pb-2 pr-4">Target</th>
+                          <th className="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 pb-2 pr-4">Sent</th>
+                          <th className="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 pb-2">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+                        {notifLogs.map((log: any) => (
+                          <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                            <td className="py-3 pr-4 font-semibold text-gray-800 dark:text-gray-100 max-w-[160px] truncate">{log.title}</td>
+                            <td className="py-3 pr-4 text-gray-600 dark:text-gray-400 max-w-[220px] truncate">{log.body}</td>
+                            <td className="py-3 pr-4">
+                              <span className={`text-xs px-2 py-1 rounded-lg font-semibold ${
+                                log.target === 'all' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' :
+                                log.target === 'users' ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' :
+                                'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300'
+                              }`}>
+                                {log.target === 'all' ? 'Everyone' : log.target === 'users' ? 'Customers' : 'Vendors'}
+                              </span>
+                            </td>
+                            <td className="py-3 pr-4">
+                              <span className="text-green-600 font-bold">{log.sentCount}</span>
+                              {log.failCount > 0 && <span className="text-red-400 ml-1 text-xs">({log.failCount} failed)</span>}
+                            </td>
+                            <td className="py-3 text-xs text-gray-500 dark:text-gray-500 whitespace-nowrap">
+                              {new Date(log.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </div>

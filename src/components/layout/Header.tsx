@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { MapPin, ShoppingBag, User, ChevronDown, Shield, Store, LocateFixed, Search } from 'lucide-react';
+import { MapPin, ShoppingBag, User, ChevronDown, Shield, Store, LocateFixed } from 'lucide-react';
 import { useAuthStore } from '@/store/auth';
 import { useLocation } from '@/hooks/useLocation';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -96,16 +96,6 @@ export default function Header() {
 
           {/* Spacer — pushes auth to right on mobile */}
           <div className="flex-1 md:hidden" />
-
-          {/* Mobile search icon */}
-          <Link
-            href="/search"
-            className="flex-shrink-0 md:hidden w-9 h-9 flex items-center justify-center rounded-lg"
-            style={{ color: 'var(--text-muted)' }}
-            aria-label="Search"
-          >
-            <Search size={20} />
-          </Link>
 
           {/* Auth + Theme toggle */}
           <div className="flex items-center gap-2 flex-shrink-0">
