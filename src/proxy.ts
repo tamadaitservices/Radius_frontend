@@ -4,8 +4,8 @@ export function proxy(req: NextRequest) {
   const host = req.headers.get('host') ?? '';
   const { pathname } = req.nextUrl;
 
-  // In local dev, skip subdomain routing — access panels via /admin and /vendor/dashboard directly
-  if (host.startsWith('localhost') || host.startsWith('127.0.0.1')) {
+  // In local dev or Vercel preview, skip subdomain routing — access panels via /admin and /vendor/dashboard directly
+  if (host.startsWith('localhost') || host.startsWith('127.0.0.1') || host.endsWith('.vercel.app')) {
     return NextResponse.next();
   }
 
