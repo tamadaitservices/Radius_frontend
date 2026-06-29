@@ -139,10 +139,14 @@ export default function AdminPage() {
   const [editingZone, setEditingZone] = useState<any>(null);
   const [editZoneForm, setEditZoneForm] = useState({ name: '', categories: [] as string[], bannerIds: [] as string[], polygon: [] as { lat: number; lng: number }[] });
 
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => { setHydrated(true); }, []);
+
   useEffect(() => {
+    if (!hydrated) return;
     if (user && user.role !== 'ADMIN') router.push('/');
     if (!user) router.push('/admin/login');
-  }, [user]);
+  }, [user, hydrated]);
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['admin-stats'],
