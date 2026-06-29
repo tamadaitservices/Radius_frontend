@@ -133,8 +133,8 @@ export default function PromoBanners() {
   return (
     <section>
       <div
-        className="relative overflow-hidden rounded-xl"
-        style={{ height: '140px' }}
+        className="relative overflow-hidden"
+        style={{ height: '160px' }}
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
         onTouchStart={handleTouchStart}
@@ -148,31 +148,38 @@ export default function PromoBanners() {
             transition: 'transform 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
-          {items.map((b) => (
-            <Link
+          {items.map((b, idx) => (
+            <div
               key={b.id}
+              className="relative flex-shrink-0 h-full"
+              style={{
+                width: `calc(100% / ${visibleCount})`,
+                paddingRight: visibleCount > 1 && idx < items.length - 1 ? '12px' : '0',
+              }}
+            >
+            <Link
               href={b.ctaLink}
-              className={`relative flex-shrink-0 h-full flex flex-col justify-between rounded-xl overflow-hidden ${!b.imageUrl ? `bg-gradient-to-br ${b.gradient} p-4` : ''}`}
-              style={{ width: `calc(100% / ${visibleCount})`, paddingRight: visibleCount > 1 ? '8px' : 0 }}
+              className={`relative block h-full rounded-2xl overflow-hidden ${!b.imageUrl ? `bg-gradient-to-br ${b.gradient}` : ''}`}
             >
               {b.imageUrl ? (
-                <Image src={b.imageUrl} alt={b.title} fill className="object-fill rounded-xl" sizes="600px" />
+                <Image src={b.imageUrl} alt={b.title} fill className="object-cover" sizes="600px" />
               ) : (
-                <>
+                <div className="flex flex-col justify-between h-full p-4">
                   <div className="absolute right-2 top-2 w-16 h-16 rounded-full bg-white/10 pointer-events-none" />
                   <div className="relative z-10">
                     <p className="text-white/70 text-[10px] font-bold uppercase tracking-widest mb-1">Nearby</p>
                     <h3 className="text-white font-black text-sm leading-tight whitespace-pre-line">{b.title}</h3>
                     {b.subtitle && <p className="text-white/80 text-xs mt-1 leading-snug">{b.subtitle}</p>}
                   </div>
-                  <div className="relative z-10 mt-3">
+                  <div className="relative z-10">
                     <span className="inline-block bg-white text-gray-900 text-[11px] font-bold px-3 py-1 rounded-md">
                       {b.ctaText}
                     </span>
                   </div>
-                </>
+                </div>
               )}
             </Link>
+            </div>
           ))}
         </div>
 
