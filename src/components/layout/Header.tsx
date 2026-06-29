@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { MapPin, ShoppingBag, User, ChevronDown, Shield, Store, LocateFixed } from 'lucide-react';
+import { MapPin, ShoppingBag, User, ChevronDown, Shield, Store, LocateFixed, Search } from 'lucide-react';
 import { useAuthStore } from '@/store/auth';
 import { useLocation } from '@/hooks/useLocation';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -39,7 +39,7 @@ export default function Header() {
         className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md shadow-sm"
         style={{ background: 'var(--header-bg)', borderBottom: '1px solid var(--border)' }}
       >
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center gap-3">
           {/* Logo */}
           <Link href="/" className="flex-shrink-0">
             <span className="text-2xl font-black tracking-tight">
@@ -63,8 +63,8 @@ export default function Header() {
             <ChevronDown size={14} />
           </button>
 
-          {/* Search bar */}
-          <div className="flex-1 max-w-2xl">
+          {/* Search bar — hidden on mobile */}
+          <div className="flex-1 max-w-2xl hidden md:block">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -94,8 +94,21 @@ export default function Header() {
             </form>
           </div>
 
+          {/* Spacer — pushes auth to right on mobile */}
+          <div className="flex-1 md:hidden" />
+
+          {/* Mobile search icon */}
+          <Link
+            href="/search"
+            className="flex-shrink-0 md:hidden w-9 h-9 flex items-center justify-center rounded-lg"
+            style={{ color: 'var(--text-muted)' }}
+            aria-label="Search"
+          >
+            <Search size={20} />
+          </Link>
+
           {/* Auth + Theme toggle */}
-          <div className="flex items-center gap-3 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {user ? (
               <>
                 {isAdmin && (
