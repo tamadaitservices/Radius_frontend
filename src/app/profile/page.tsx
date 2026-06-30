@@ -70,6 +70,7 @@ export default function ProfilePage() {
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editAvatar, setEditAvatar] = useState<string>('');
+  const [editPhone, setEditPhone] = useState('');
 
   useEffect(() => { if (!user) router.push('/login'); }, [user]);
 
@@ -97,6 +98,7 @@ export default function ProfilePage() {
       ...(editName.trim() ? { name: editName.trim() } : {}),
       ...(editEmail.trim() ? { email: editEmail.trim() } : {}),
       ...(editAvatar ? { avatar: editAvatar } : {}),
+      ...(editPhone.length === 10 ? { phone: editPhone } : {}),
     }),
     onSuccess: (res) => {
       const updated = res.data;
@@ -157,10 +159,18 @@ export default function ProfilePage() {
                   <Mail size={13} /><span className="truncate">{(user as any).email}</span>
                 </div>
               )}
-              {(user as any).phone && (
+              {(user as any).phone ? (
                 <div className="flex items-center gap-1 text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>
                   <Phone size={13} /><span>+91 {(user as any).phone}</span>
                 </div>
+              ) : (
+                <button
+                  onClick={() => setEditing(true)}
+                  className="flex items-center gap-1 text-sm mt-1 font-medium"
+                  style={{ color: 'var(--ry-orange)' }}
+                >
+                  <Phone size={13} /> Add mobile number
+                </button>
               )}
               {user.role === 'CUSTOMER' && (
                 <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full mt-1.5" style={{ color: 'var(--ry-green)', background: 'var(--ry-green-light)' }}>
@@ -246,14 +256,29 @@ export default function ProfilePage() {
                 placeholder="you@example.com" className={inputCls} style={inputStyle} />
             </div>
 
-            {/* Phone readonly */}
+            {/* Phone */}
             <div>
               <label className={labelCls} style={labelStyle}>Mobile</label>
-              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm border" style={{ background: 'var(--surface-2)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
-                <Phone size={13} />
-                <span>{(user as any).phone ? `+91 ${(user as any).phone}` : 'Not set'}</span>
-                <span className="ml-auto text-xs" style={{ color: 'var(--text-subtle)' }}>Cannot change</span>
-              </div>
+              {(user as any).phone ? (
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm border" style={{ background: 'var(--surface-2)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
+                  <Phone size={13} />
+                  <span>+91 {(user as any).phone}</span>
+                  <span className="ml-auto text-xs" style={{ color: 'var(--text-subtle)' }}>Cannot change</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <div className="px-3 py-2.5 rounded-xl text-sm border flex-shrink-0" style={{ background: 'var(--surface-2)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}>+91</div>
+                  <input
+                    type="tel"
+                    value={editPhone}
+                    onChange={(e) => setEditPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    placeholder="10-digit mobile number"
+                    maxLength={10}
+                    className={inputCls + ' flex-1'}
+                    style={inputStyle}
+                  />
+                </div>
+              )}
             </div>
 
             <button

@@ -822,7 +822,8 @@ export default function VendorDashboard() {
                                     {r.status}
                                   </span>
                                 </div>
-                                <p className="text-xs text-gray-500 mt-0.5">{r.user?.name ?? r.user?.phone} · {r.shop?.name}</p>
+                                <p className="text-xs text-gray-500 mt-0.5">{r.user?.name || 'Customer'} · {r.shop?.name}</p>
+                                {r.user?.phone && <p className="text-xs text-gray-400 mt-0.5">📞 +91 {r.user.phone}</p>}
                                 <p className="text-xs text-gray-400 mt-0.5">{new Date(r.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                                 {/* Action buttons for PENDING */}
                                 {r.status === 'PENDING' && (
