@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
@@ -29,23 +29,37 @@ export default function LoginPage() {
 
   const confirmationRef = useRef<any>(null);
   const recaptchaVerifierRef = useRef<any>(null);
+  const [recaptchaReady, setRecaptchaReady] = useState(false);
+
+  // Render reCAPTCHA widget on mount so it's verified before user clicks
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { RecaptchaVerifier } = await import('firebase/auth');
+        const { auth } = await import('@/lib/firebase');
+        if (cancelled) return;
+        const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+          size: 'normal',
+          callback: () => { if (!cancelled) setRecaptchaReady(true); },
+          'expired-callback': () => { if (!cancelled) setRecaptchaReady(false); },
+        });
+        await verifier.render();
+        recaptchaVerifierRef.current = verifier;
+      } catch (e) {
+        console.error('[reCAPTCHA init]', e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const handleSendOtp = async () => {
-    if (phone.length !== 10) return;
+    if (phone.length !== 10 || !recaptchaReady) return;
     setSending(true);
     try {
-      const { signInWithPhoneNumber, RecaptchaVerifier } = await import('firebase/auth');
+      const { signInWithPhoneNumber } = await import('firebase/auth');
       const { auth } = await import('@/lib/firebase');
-
-      // Always create a fresh verifier — reusing a cleared one causes errors
-      if (recaptchaVerifierRef.current) {
-        try { recaptchaVerifierRef.current.clear(); } catch {}
-        recaptchaVerifierRef.current = null;
-      }
-      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
-
-      const verifier = recaptchaVerifierRef.current;
-      const confirmation = await signInWithPhoneNumber(auth, `+91${phone}`, verifier);
+      const confirmation = await signInWithPhoneNumber(auth, `+91${phone}`, recaptchaVerifierRef.current);
       confirmationRef.current = confirmation;
       setStep('otp');
       toast.success('OTP sent!');
@@ -56,7 +70,9 @@ export default function LoginPage() {
       else if (code === 'auth/too-many-requests') toast.error('Too many attempts. Try later.');
       else if (code.includes('app-not-configured') || code.includes('api-key')) toast.error('Firebase not configured. Contact support.');
       else toast.error(`OTP failed (${code || 'unknown'}). Check console.`);
-      recaptchaVerifierRef.current?.clear();
+      // Reset reCAPTCHA so user can retry
+      setRecaptchaReady(false);
+      try { recaptchaVerifierRef.current?.clear(); } catch {}
       recaptchaVerifierRef.current = null;
     } finally {
       setSending(false);
@@ -211,14 +227,25 @@ export default function LoginPage() {
                 </div>
               </div>
 
+              {/* reCAPTCHA widget — rendered here */}
+              <div className="flex justify-center">
+                <div id="recaptcha-container" />
+              </div>
+
               <button
                 onClick={handleSendOtp}
-                disabled={phone.length !== 10 || sending}
+                disabled={phone.length !== 10 || sending || !recaptchaReady}
                 className="w-full py-3 rounded-xl text-white font-bold text-base flex items-center justify-center gap-2 disabled:opacity-50"
                 style={{ backgroundColor: 'var(--ry-green)' }}
               >
                 {sending ? <><Loader2 size={16} className="animate-spin" /> Sending...</> : <>Get OTP <ChevronRight size={16} /></>}
               </button>
+
+              {!recaptchaReady && (
+                <p className="text-center text-xs" style={{ color: 'var(--text-subtle)' }}>
+                  Please complete the verification above to continue
+                </p>
+              )}
 
               <p className="flex items-start gap-2 text-xs" style={{ color: 'var(--text-subtle)' }}>
                 <Shield size={12} className="flex-shrink-0 mt-0.5" />
@@ -343,8 +370,6 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Always-mounted reCAPTCHA anchor — must stay outside conditional rendering */}
-      <div id="recaptcha-container" style={{ position: 'fixed', bottom: 0, left: 0 }} />
     </div>
   );
 }
