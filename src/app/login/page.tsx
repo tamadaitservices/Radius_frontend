@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { Home, Shield, ArrowLeft, Loader2, LocateFixed, ChevronRight, Mail } from 'lucide-react';
+import { Home, Shield, ArrowLeft, Loader2, LocateFixed, ChevronRight, Mail, Phone } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
@@ -19,6 +19,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [name, setName] = useState('');
+  const [mobile, setMobile] = useState('');
   const [sending, setSending] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
@@ -87,11 +88,12 @@ export default function LoginPage() {
 
   const handleSaveProfile = async () => {
     if (!name.trim()) { toast.error('Please enter your name.'); return; }
+    if (mobile && mobile.length !== 10) { toast.error('Enter a valid 10-digit mobile number.'); return; }
     setSavingProfile(true);
     try {
       await api.patch(
         '/api/users/me',
-        { name: name.trim() },
+        { name: name.trim(), ...(mobile ? { phone: mobile } : {}) },
         { headers: { Authorization: `Bearer ${pendingToken}` } }
       );
       setStep('location');
@@ -112,9 +114,24 @@ export default function LoginPage() {
       const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
         navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 })
       );
+      const { latitude, longitude } = pos.coords;
+      // Reverse geocode to get a label
+      let locationLabel = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+      try {
+        const geo = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY}`
+        );
+        const data = await geo.json();
+        if (data.results?.[0]) {
+          const parts = data.results[0].address_components;
+          const locality = parts.find((p: any) => p.types.includes('locality') || p.types.includes('sublocality'))?.long_name;
+          const city = parts.find((p: any) => p.types.includes('administrative_area_level_2'))?.long_name;
+          locationLabel = locality || city || data.results[0].formatted_address.split(',')[0];
+        }
+      } catch { /* use coords as label */ }
       await api.patch(
         '/api/users/me',
-        { latitude: pos.coords.latitude, longitude: pos.coords.longitude },
+        { latitude, longitude, locationLabel },
         { headers: { Authorization: `Bearer ${pendingToken}` } }
       );
     } catch {
@@ -293,8 +310,29 @@ export default function LoginPage() {
                   autoFocus
                   className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none text-base"
                   style={{ background: 'var(--input-bg)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
-                  onKeyDown={(e) => e.key === 'Enter' && !savingProfile && handleSaveProfile()}
                 />
+              </div>
+
+              <div>
+                <label className="text-sm font-semibold block mb-1.5" style={{ color: 'var(--foreground)' }}>
+                  Mobile Number{' '}
+                  <span className="text-sm font-normal" style={{ color: 'var(--text-subtle)' }}>(optional)</span>
+                </label>
+                <div className="flex rounded-xl border-2 overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+                  <span className="flex items-center px-3 text-sm font-medium border-r" style={{ color: 'var(--text-muted)', borderColor: 'var(--border)', background: 'var(--surface)' }}>
+                    <Phone size={14} className="mr-1" /> +91
+                  </span>
+                  <input
+                    type="tel"
+                    value={mobile}
+                    onChange={(e) => setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    placeholder="9876543210"
+                    className="flex-1 px-3 py-3 focus:outline-none text-base"
+                    style={{ background: 'var(--input-bg)', color: 'var(--foreground)' }}
+                    maxLength={10}
+                    onKeyDown={(e) => e.key === 'Enter' && !savingProfile && handleSaveProfile()}
+                  />
+                </div>
               </div>
 
               <button
