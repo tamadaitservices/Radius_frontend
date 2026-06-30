@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Clock, MapPin, Loader2 } from 'lucide-react';
+import { Clock, MapPin, Loader2, Phone } from 'lucide-react';
 import api from '@/lib/api';
 import { formatPrice, getTimeLeft } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth';
@@ -68,7 +68,7 @@ export default function ReservationsPage() {
           {data.map((res: any) => {
             const sc = STATUS_CONFIG[res.status] || STATUS_CONFIG.EXPIRED;
             return (
-              <div key={res.id} className="bg-white rounded-2xl border border-gray-100 p-4">
+              <div key={res.id} className="rounded-2xl p-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
                 <div className="flex gap-3">
                   <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
                     {res.product?.image ? (
@@ -78,24 +78,34 @@ export default function ReservationsPage() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-gray-900 truncate">{res.product?.name}</p>
-                    <p className="text-sm text-gray-500">{res.shop?.name}</p>
+                    <p className="font-bold truncate" style={{ color: 'var(--foreground)' }}>{res.product?.name}</p>
+                    <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{res.shop?.name}</p>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
                       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${sc.color}`}>{sc.label}</span>
                       <CountdownBadge expiresAt={res.expiresAt} status={res.status} />
                     </div>
                     {res.agreedPrice && (
-                      <p className="text-sm font-bold text-gray-900 mt-1">Agreed: {formatPrice(res.agreedPrice)}</p>
+                      <p className="text-sm font-bold mt-1" style={{ color: 'var(--foreground)' }}>Agreed: {formatPrice(res.agreedPrice)}</p>
                     )}
                   </div>
                 </div>
 
+                {['PENDING', 'ACCEPTED'].includes(res.status) && res.shop?.phone && (
+                  <a
+                    href={`tel:${res.shop.phone}`}
+                    className="mt-3 flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-bold border"
+                    style={{ borderColor: 'var(--ry-green)', color: 'var(--ry-green)', background: 'var(--ry-green-light)' }}
+                  >
+                    <Phone size={14} />
+                    Call Shop
+                  </a>
+                )}
                 {res.status === 'ACCEPTED' && (
                   <a
                     href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(res.shop?.address || '')}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-3 flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-white text-sm font-bold"
+                    className="mt-2 flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-white text-sm font-bold"
                     style={{ backgroundColor: 'var(--ry-green)' }}
                   >
                     <MapPin size={14} />
