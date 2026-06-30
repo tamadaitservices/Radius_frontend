@@ -5,6 +5,7 @@ import { Toaster } from 'react-hot-toast';
 import QueryProvider from '@/components/providers/QueryProvider';
 import SiteShell from '@/components/providers/SiteShell';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import GoogleProvider from '@/components/providers/GoogleProvider';
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://radiuyes.com';
 
@@ -36,12 +37,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: `(function(){var t=localStorage.getItem('ry-theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;if(d)document.documentElement.classList.add('dark')})()` }} />
       </head>
       <body>
+        <GoogleProvider>
         <QueryProvider>
           <SiteShell>
             <ErrorBoundary>{children}</ErrorBoundary>
           </SiteShell>
           <Toaster position="bottom-center" toastOptions={{ duration: 3000 }} />
         </QueryProvider>
+        </GoogleProvider>
       </body>
     </html>
   );
