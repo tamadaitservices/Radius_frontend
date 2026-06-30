@@ -18,15 +18,50 @@ const STATUS_COLORS: Record<string, string> = {
   COMPLETED: 'text-blue-600 bg-blue-50',
 };
 
+const AVATARS = [
+  '🦁', '🐯', '🐻', '🐼', '🦊',
+  '🐺', '🦝', '🐮', '🐷', '🐸',
+  '🐧', '🦅', '🦋', '🐬', '🦄',
+  '🐲', '🤖', '👨‍💻', '🧑‍🚀', '🥷',
+];
+
+const AVATAR_BG: Record<string, string> = {
+  '🦁': '#E8A838', '🐯': '#D4701A', '🐻': '#8B6914', '🐼': '#3D3D3D', '🦊': '#D45E1A',
+  '🐺': '#6B7280', '🦝': '#5C5C5C', '🐮': '#5B88C0', '🐷': '#E8829A', '🐸': '#4CAF50',
+  '🐧': '#1E3A5F', '🦅': '#7B4F2E', '🦋': '#9C27B0', '🐬': '#0288D1', '🦄': '#E91E63',
+  '🐲': '#2E7D32', '🤖': '#455A64', '👨‍💻': '#1976D2', '🧑‍🚀': '#37474F', '🥷': '#212121',
+};
+
+function Avatar({ value, size = 64 }: { value?: string | null; fallback?: string; size?: number }) {
+  if (value && AVATARS.includes(value)) {
+    return (
+      <div
+        className="flex items-center justify-center rounded-2xl flex-shrink-0"
+        style={{ width: size, height: size, backgroundColor: AVATAR_BG[value] || '#16a34a', fontSize: size * 0.5 }}
+      >
+        {value}
+      </div>
+    );
+  }
+  return (
+    <div
+      className="flex items-center justify-center rounded-2xl flex-shrink-0 text-white font-black"
+      style={{ width: size, height: size, backgroundColor: 'var(--ry-green)', fontSize: size * 0.35 }}
+    >
+      ?
+    </div>
+  );
+}
+
 export default function ProfilePage() {
-  const { user, setAuth } = useAuthStore();
-  const { clearAuth } = useAuthStore();
+  const { user, setAuth, clearAuth } = useAuthStore();
   const router = useRouter();
   const qc = useQueryClient();
 
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
+  const [editAvatar, setEditAvatar] = useState<string>('');
 
   useEffect(() => { if (!user) router.push('/login'); }, [user]);
 
@@ -34,6 +69,7 @@ export default function ProfilePage() {
     if (user) {
       setEditName(user.name || '');
       setEditEmail((user as any).email || '');
+      setEditAvatar((user as any).avatar || '');
     }
   }, [user]);
 
@@ -45,8 +81,9 @@ export default function ProfilePage() {
 
   const saveProfile = useMutation({
     mutationFn: async () => api.patch('/api/users/me', {
-      name: editName.trim() || undefined,
-      email: editEmail.trim() || undefined,
+      ...(editName.trim() ? { name: editName.trim() } : {}),
+      ...(editEmail.trim() ? { email: editEmail.trim() } : {}),
+      ...(editAvatar ? { avatar: editAvatar } : {}),
     }),
     onSuccess: (res) => {
       const updated = res.data;
@@ -76,7 +113,7 @@ export default function ProfilePage() {
 
   if (!user) return null;
 
-  const avatarLetter = user.name ? user.name[0].toUpperCase() : user.phone?.[0] || '?';
+  const currentAvatar = (user as any).avatar;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
@@ -85,12 +122,10 @@ export default function ProfilePage() {
       <div className="bg-white rounded-2xl border border-gray-100 p-6">
         {!editing ? (
           <div className="flex items-start gap-4">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black text-white flex-shrink-0" style={{ backgroundColor: 'var(--ry-green)' }}>
-              {avatarLetter}
-            </div>
+            <Avatar value={currentAvatar} size={64} />
             <div className="flex-1 min-w-0">
               <h1 className="text-xl font-black text-gray-900 truncate">
-                {user.name || <span className="text-gray-400 font-medium text-base">No name set</span>}
+                {user.name || <span className="text-gray-400 font-medium text-base italic">No name set</span>}
               </h1>
               {(user as any).email && (
                 <div className="flex items-center gap-1 text-sm text-gray-500 mt-0.5">
@@ -110,20 +145,56 @@ export default function ProfilePage() {
             </div>
             <button
               onClick={() => setEditing(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold border border-gray-200 hover:bg-gray-50 transition-colors text-gray-600"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold border border-gray-200 hover:bg-gray-50 transition-colors text-gray-600 flex-shrink-0"
             >
               <Pencil size={13} /> Edit
             </button>
           </div>
         ) : (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between mb-1">
+          <div className="space-y-5">
+            <div className="flex items-center justify-between">
               <h2 className="font-bold text-gray-900">Edit Profile</h2>
               <button onClick={() => setEditing(false)} className="text-gray-400 hover:text-gray-600">
                 <X size={18} />
               </button>
             </div>
 
+            {/* Avatar picker */}
+            <div>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-2">Choose Avatar</label>
+              <div className="grid grid-cols-10 gap-2">
+                {AVATARS.map((av) => (
+                  <button
+                    key={av}
+                    type="button"
+                    onClick={() => setEditAvatar(av)}
+                    className="relative flex items-center justify-center rounded-xl transition-all"
+                    style={{
+                      width: 44,
+                      height: 44,
+                      fontSize: 22,
+                      backgroundColor: editAvatar === av ? AVATAR_BG[av] || '#16a34a' : '#f3f4f6',
+                      outline: editAvatar === av ? `3px solid ${AVATAR_BG[av] || '#16a34a'}` : '3px solid transparent',
+                      outlineOffset: 2,
+                    }}
+                    title={av}
+                  >
+                    {av}
+                  </button>
+                ))}
+              </div>
+              {editAvatar && (
+                <button
+                  type="button"
+                  onClick={() => setEditAvatar('')}
+                  className="mt-1.5 text-xs text-gray-400 hover:text-gray-600 underline"
+                >
+                  Clear avatar
+                </button>
+              )}
+            </div>
+
+            {/* Name */}
             <div>
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Name</label>
               <input
@@ -132,12 +203,14 @@ export default function ProfilePage() {
                 onChange={(e) => setEditName(e.target.value)}
                 placeholder="Your full name"
                 className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-green-500"
-                autoFocus
               />
             </div>
 
+            {/* Email */}
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Email <span className="text-gray-400 normal-case font-normal">(optional)</span></label>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">
+                Email <span className="text-gray-400 normal-case font-normal">(optional)</span>
+              </label>
               <input
                 type="email"
                 value={editEmail}
@@ -147,6 +220,7 @@ export default function ProfilePage() {
               />
             </div>
 
+            {/* Phone (readonly) */}
             <div>
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Mobile</label>
               <div className="flex items-center gap-2 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-500">

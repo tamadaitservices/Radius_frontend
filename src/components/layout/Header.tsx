@@ -130,7 +130,9 @@ export default function Header() {
                     </Link>
                     <div className="flex items-center gap-2">
                       <Link href="/profile" className="flex items-center gap-1.5 text-sm font-medium" style={{ color: 'var(--text-muted)' }}>
-                        <User size={18} />
+                        {(user as any).avatar
+                          ? <span className="text-lg leading-none">{(user as any).avatar}</span>
+                          : <User size={18} />}
                         <span className="hidden sm:inline">{user.name || 'Profile'}</span>
                       </Link>
                       <button onClick={logout} className="text-xs transition-colors" style={{ color: 'var(--text-subtle)' }}>Logout</button>
