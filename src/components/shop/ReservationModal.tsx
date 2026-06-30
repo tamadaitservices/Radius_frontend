@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import Image from 'next/image';
-import { X, Clock, CheckCircle, Phone } from 'lucide-react';
+import { X, Clock, CheckCircle, Phone, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { formatPrice, getTimeLeft } from '@/lib/utils';
+import { useAuthStore } from '@/store/auth';
 
 interface Props {
   shopId: string;
@@ -14,13 +16,15 @@ interface Props {
   onClose: () => void;
 }
 
-type Step = 'confirm' | 'success';
+type Step = 'confirm' | 'no-mobile' | 'success';
 
 export default function ReservationModal({ shopId, product, onClose }: Props) {
   const [step, setStep] = useState<Step>('confirm');
   const [agreedPrice, setAgreedPrice] = useState<string>(product.price.toString());
   const [reservation, setReservation] = useState<{ id: string; expiresAt: string } | null>(null);
   const [timeLeft, setTimeLeft] = useState('');
+  const { user } = useAuthStore();
+  const router = useRouter();
 
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
@@ -105,12 +109,39 @@ export default function ReservationModal({ shopId, product, onClose }: Props) {
             </div>
 
             <button
-              onClick={() => mutate()}
+              onClick={() => {
+                if (!(user as any)?.phone) { setStep('no-mobile'); return; }
+                mutate();
+              }}
               disabled={isPending}
               className="w-full py-3 rounded-xl text-white font-bold text-base transition-opacity disabled:opacity-60"
               style={{ backgroundColor: 'var(--ry-orange)' }}
             >
               {isPending ? 'Reserving...' : 'Confirm Reservation'}
+            </button>
+          </div>
+        )}
+
+        {step === 'no-mobile' && (
+          <div className="p-6 text-center space-y-4">
+            <div className="w-14 h-14 rounded-full bg-orange-100 flex items-center justify-center mx-auto">
+              <AlertCircle size={28} className="text-orange-500" />
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-gray-900">Mobile number required</h3>
+              <p className="text-gray-500 text-sm mt-1">
+                The vendor needs your mobile number to confirm the reservation. Please add it to your profile first.
+              </p>
+            </div>
+            <button
+              onClick={() => { onClose(); router.push('/profile'); }}
+              className="w-full py-3 rounded-xl text-white font-bold"
+              style={{ backgroundColor: 'var(--ry-orange)' }}
+            >
+              Go to Profile →
+            </button>
+            <button onClick={() => setStep('confirm')} className="w-full py-2 text-sm text-gray-400 hover:text-gray-600">
+              Go back
             </button>
           </div>
         )}
