@@ -1,14 +1,13 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { User, Phone, Star, ShoppingBag, CheckCircle, LogOut, ChevronRight } from 'lucide-react';
+import { Phone, ShoppingBag, CheckCircle, LogOut, ChevronRight, Pencil, X, Save, Mail } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
-import { formatPrice } from '@/lib/utils';
 import Image from 'next/image';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -20,11 +19,23 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function ProfilePage() {
-  const { user, clearAuth } = useAuthStore();
+  const { user, setAuth } = useAuthStore();
+  const { clearAuth } = useAuthStore();
   const router = useRouter();
   const qc = useQueryClient();
 
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+
   useEffect(() => { if (!user) router.push('/login'); }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      setEditName(user.name || '');
+      setEditEmail((user as any).email || '');
+    }
+  }, [user]);
 
   const { data: reservations } = useQuery({
     queryKey: ['my-reservations'],
@@ -32,12 +43,21 @@ export default function ProfilePage() {
     enabled: !!user,
   });
 
-  const updateName = useMutation({
-    mutationFn: async (name: string) => api.patch('/api/users/me', { name }),
-    onSuccess: () => {
+  const saveProfile = useMutation({
+    mutationFn: async () => api.patch('/api/users/me', {
+      name: editName.trim() || undefined,
+      email: editEmail.trim() || undefined,
+    }),
+    onSuccess: (res) => {
+      const updated = res.data;
+      const token = localStorage.getItem('accessToken') || '';
+      const refresh = localStorage.getItem('refreshToken') || '';
+      setAuth(updated, token, refresh);
       qc.invalidateQueries({ queryKey: ['me'] });
-      toast.success('Name updated.');
+      toast.success('Profile updated.');
+      setEditing(false);
     },
+    onError: () => toast.error('Failed to save. Try again.'),
   });
 
   const stats = {
@@ -56,27 +76,95 @@ export default function ProfilePage() {
 
   if (!user) return null;
 
+  const avatarLetter = user.name ? user.name[0].toUpperCase() : user.phone?.[0] || '?';
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+
       {/* Profile card */}
       <div className="bg-white rounded-2xl border border-gray-100 p-6">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black text-white flex-shrink-0" style={{ backgroundColor: 'var(--ry-green)' }}>
-            {user.name ? user.name[0].toUpperCase() : user.phone[0]}
-          </div>
-          <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-black text-gray-900 truncate">{user.name || 'Your Profile'}</h1>
-            <div className="flex items-center gap-1 text-sm text-gray-500 mt-0.5">
-              <Phone size={13} />
-              <span>+91 {user.phone}</span>
+        {!editing ? (
+          <div className="flex items-start gap-4">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black text-white flex-shrink-0" style={{ backgroundColor: 'var(--ry-green)' }}>
+              {avatarLetter}
             </div>
-            {user.role === 'CUSTOMER' && (
-              <span className="inline-flex items-center gap-1 text-xs text-green-700 bg-green-50 px-2 py-0.5 rounded-full mt-1">
-                <CheckCircle size={11} /> Verified Customer
-              </span>
-            )}
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl font-black text-gray-900 truncate">
+                {user.name || <span className="text-gray-400 font-medium text-base">No name set</span>}
+              </h1>
+              {(user as any).email && (
+                <div className="flex items-center gap-1 text-sm text-gray-500 mt-0.5">
+                  <Mail size={13} />
+                  <span>{(user as any).email}</span>
+                </div>
+              )}
+              <div className="flex items-center gap-1 text-sm text-gray-500 mt-0.5">
+                <Phone size={13} />
+                <span>+91 {user.phone}</span>
+              </div>
+              {user.role === 'CUSTOMER' && (
+                <span className="inline-flex items-center gap-1 text-xs text-green-700 bg-green-50 px-2 py-0.5 rounded-full mt-1.5">
+                  <CheckCircle size={11} /> Verified Customer
+                </span>
+              )}
+            </div>
+            <button
+              onClick={() => setEditing(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold border border-gray-200 hover:bg-gray-50 transition-colors text-gray-600"
+            >
+              <Pencil size={13} /> Edit
+            </button>
           </div>
-        </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="font-bold text-gray-900">Edit Profile</h2>
+              <button onClick={() => setEditing(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Name</label>
+              <input
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="Your full name"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-green-500"
+                autoFocus
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Email <span className="text-gray-400 normal-case font-normal">(optional)</span></label>
+              <input
+                type="email"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                placeholder="you@example.com"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-green-500"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Mobile</label>
+              <div className="flex items-center gap-2 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-500">
+                <Phone size={13} /> +91 {user.phone}
+                <span className="ml-auto text-xs text-gray-400">Cannot change</span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => saveProfile.mutate()}
+              disabled={saveProfile.isPending}
+              className="w-full py-2.5 rounded-xl text-white text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-60"
+              style={{ backgroundColor: 'var(--ry-green)' }}
+            >
+              <Save size={14} /> {saveProfile.isPending ? 'Saving…' : 'Save Changes'}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Stats */}
@@ -152,6 +240,7 @@ export default function ProfilePage() {
           <span className="flex-1 text-sm font-medium text-red-600">Log out</span>
         </button>
       </div>
+
     </div>
   );
 }
