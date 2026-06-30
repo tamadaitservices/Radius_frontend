@@ -76,6 +76,9 @@ export default function VendorDashboard() {
   const [newProductImageFile, setNewProductImageFile] = useState<File | null>(null);
   const [newProductImagePreview, setNewProductImagePreview] = useState<string | null>(null);
 
+  // PIN confirmation state
+  const [pinEntry, setPinEntry] = useState<{ id: string; value: string } | null>(null);
+
   // Profile form
   const [profileForm, setProfileForm] = useState({ name: '' });
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -185,6 +188,19 @@ export default function VendorDashboard() {
       toast.success('Status updated.');
     },
     onError: (e: any) => toast.error(actionErrorMessage(e)),
+  });
+
+  const confirmPin = useMutation({
+    mutationFn: async ({ id, pin }: { id: string; pin: string }) =>
+      api.post(`/api/reservations/${id}/confirm-pin`, { pin }),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['vendor-reservations'] });
+      qc.invalidateQueries({ queryKey: ['vendor-dashboard'] });
+      setPinEntry(null);
+      const { level } = res.data;
+      toast.success(`Purchase confirmed! Customer reached Level ${level} 🎉`);
+    },
+    onError: (e: any) => toast.error(actionErrorMessage(e, 'Wrong PIN.')),
   });
 
   const uploadGalleryImage = useMutation({
@@ -823,13 +839,38 @@ export default function VendorDashboard() {
                                     </button>
                                   </div>
                                 )}
-                                {/* Mark completed for accepted */}
+                                {/* PIN confirmation for accepted reservations */}
                                 {r.status === 'ACCEPTED' && (
-                                  <button onClick={() => respondReservation.mutate({ id: r.id, status: 'COMPLETED' })}
-                                    disabled={respondReservation.isPending}
-                                    className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold border border-blue-200 mt-2">
-                                    <CheckCircle size={12} /> Mark Completed
-                                  </button>
+                                  <div className="mt-2">
+                                    {pinEntry?.id === r.id ? (
+                                      <div className="flex items-center gap-2">
+                                        <input
+                                          type="tel"
+                                          maxLength={4}
+                                          placeholder="4-digit PIN"
+                                          value={pinEntry.value}
+                                          onChange={(e) => setPinEntry({ id: r.id, value: e.target.value.replace(/\D/g, '').slice(0, 4) })}
+                                          className="w-28 px-3 py-1.5 border border-blue-300 rounded-lg text-sm font-bold tracking-[0.3em] focus:outline-none focus:border-blue-500 text-center"
+                                          autoFocus
+                                        />
+                                        <button
+                                          onClick={() => confirmPin.mutate({ id: r.id, pin: pinEntry.value })}
+                                          disabled={pinEntry.value.length !== 4 || confirmPin.isPending}
+                                          className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold disabled:opacity-50 hover:bg-blue-700"
+                                        >
+                                          {confirmPin.isPending ? '…' : 'Confirm'}
+                                        </button>
+                                        <button onClick={() => setPinEntry(null)} className="text-gray-400 hover:text-gray-600 text-xs">Cancel</button>
+                                      </div>
+                                    ) : (
+                                      <button
+                                        onClick={() => setPinEntry({ id: r.id, value: '' })}
+                                        className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold border border-blue-200"
+                                      >
+                                        <CheckCircle size={12} /> Confirm Purchase (PIN)
+                                      </button>
+                                    )}
+                                  </div>
                                 )}
                               </div>
                               {r.agreedPrice && <p className="text-sm font-bold text-green-700 flex-shrink-0">₹{r.agreedPrice}</p>}
