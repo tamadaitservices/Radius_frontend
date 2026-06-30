@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
@@ -26,84 +26,29 @@ export default function LoginPage() {
   const [pendingToken, setPendingToken] = useState<string | null>(null);
   const [pendingRefresh, setPendingRefresh] = useState<string | null>(null);
   const [pendingUser, setPendingUser] = useState<any>(null);
-
-  const confirmationRef = useRef<any>(null);
-  const recaptchaVerifierRef = useRef<any>(null);
-  const [recaptchaReady, setRecaptchaReady] = useState(false);
-  const [recaptchaError, setRecaptchaError] = useState<string | null>(null);
-  const [recaptchaLoading, setRecaptchaLoading] = useState(true);
-
-  const initRecaptcha = async () => {
-    setRecaptchaLoading(true);
-    setRecaptchaError(null);
-    setRecaptchaReady(false);
-    try {
-      if (recaptchaVerifierRef.current) {
-        try { recaptchaVerifierRef.current.clear(); } catch {}
-        recaptchaVerifierRef.current = null;
-      }
-      const { RecaptchaVerifier } = await import('firebase/auth');
-      const { auth } = await import('@/lib/firebase');
-      const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        size: 'normal',
-        callback: () => setRecaptchaReady(true),
-        'expired-callback': () => setRecaptchaReady(false),
-        'error-callback': (err: any) => {
-          console.error('[reCAPTCHA error-callback]', err);
-          setRecaptchaError('Verification widget failed. Try refreshing the page.');
-        },
-      });
-      await verifier.render();
-      recaptchaVerifierRef.current = verifier;
-    } catch (e: any) {
-      console.error('[reCAPTCHA init error]', e?.code, e?.message, e);
-      setRecaptchaError(`Verification failed to load (${e?.code || e?.message || 'unknown'}). Try refreshing.`);
-    } finally {
-      setRecaptchaLoading(false);
-    }
-  };
-
-  // Render reCAPTCHA widget on mount
-  useEffect(() => {
-    initRecaptcha();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const [isNewUser, setIsNewUser] = useState(false);
 
   const handleSendOtp = async () => {
-    if (phone.length !== 10 || !recaptchaReady) return;
+    if (phone.length !== 10) return;
     setSending(true);
     try {
-      const { signInWithPhoneNumber } = await import('firebase/auth');
-      const { auth } = await import('@/lib/firebase');
-      const confirmation = await signInWithPhoneNumber(auth, `+91${phone}`, recaptchaVerifierRef.current);
-      confirmationRef.current = confirmation;
+      const res = await api.post('/api/auth/send-otp', { phone });
+      setIsNewUser(res.data.isNewUser);
       setStep('otp');
       toast.success('OTP sent!');
     } catch (e: any) {
-      const code = e?.code ?? '';
-      console.error('[OTP Error]', code, e?.message, e);
-      if (code === 'auth/invalid-phone-number') toast.error('Invalid phone number.');
-      else if (code === 'auth/too-many-requests') toast.error('Too many attempts. Try later.');
-      else if (code.includes('app-not-configured') || code.includes('api-key')) toast.error('Firebase not configured. Contact support.');
-      else toast.error(`OTP failed (${code || 'unknown'}). Check console.`);
-      // Reset reCAPTCHA so user can retry
-      setRecaptchaReady(false);
-      try { recaptchaVerifierRef.current?.clear(); } catch {}
-      recaptchaVerifierRef.current = null;
+      toast.error(e?.response?.data?.error || 'Failed to send OTP. Try again.');
     } finally {
       setSending(false);
     }
   };
 
   const handleVerifyOtp = async () => {
-    if (otp.length !== 6 || !confirmationRef.current) return;
+    if (otp.length !== 6) return;
     setVerifying(true);
     try {
-      const result = await confirmationRef.current.confirm(otp);
-      const idToken = await result.user.getIdToken();
-
-      const res = await api.post('/api/auth/firebase-phone-verify', { idToken });
-      const { accessToken, refreshToken, isNewUser, user } = res.data;
+      const res = await api.post('/api/auth/verify-otp', { phone, code: otp });
+      const { accessToken, refreshToken, user } = res.data;
 
       setPendingToken(accessToken);
       setPendingRefresh(refreshToken);
@@ -115,10 +60,7 @@ export default function LoginPage() {
         finishLogin(user, accessToken, refreshToken);
       }
     } catch (e: any) {
-      const code = e?.code ?? '';
-      if (code === 'auth/invalid-verification-code') toast.error('Wrong OTP. Try again.');
-      else if (code === 'auth/code-expired') toast.error('OTP expired. Go back and request a new one.');
-      else toast.error(e?.response?.data?.error || 'Verification failed.');
+      toast.error(e?.response?.data?.error || 'Wrong OTP. Try again.');
     } finally {
       setVerifying(false);
     }
@@ -173,16 +115,9 @@ export default function LoginPage() {
   };
 
   const goBack = () => {
-    if (step === 'otp') {
-      setStep('phone');
-      setOtp('');
-      recaptchaVerifierRef.current?.clear();
-      recaptchaVerifierRef.current = null;
-    } else if (step === 'profile') {
-      setStep('otp');
-    } else if (step === 'location') {
-      setStep('profile');
-    }
+    if (step === 'otp') { setStep('phone'); setOtp(''); }
+    else if (step === 'profile') setStep('otp');
+    else if (step === 'location') setStep('profile');
   };
 
   return (
@@ -243,44 +178,19 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* reCAPTCHA widget */}
-              <div className="flex flex-col items-center gap-2">
-                {recaptchaLoading && (
-                  <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-muted)' }}>
-                    <Loader2 size={14} className="animate-spin" /> Loading verification…
-                  </div>
-                )}
-                {recaptchaError && (
-                  <div className="w-full text-center space-y-2">
-                    <p className="text-xs text-red-500">{recaptchaError}</p>
-                    <button onClick={initRecaptcha} className="text-xs font-semibold underline" style={{ color: 'var(--ry-green)' }}>
-                      Retry
-                    </button>
-                  </div>
-                )}
-                <div id="recaptcha-container" style={{ minHeight: recaptchaLoading ? 0 : 78 }} />
-              </div>
-
               <button
                 onClick={handleSendOtp}
-                disabled={phone.length !== 10 || sending || !recaptchaReady}
+                disabled={phone.length !== 10 || sending}
                 className="w-full py-3 rounded-xl text-white font-bold text-base flex items-center justify-center gap-2 disabled:opacity-50"
                 style={{ backgroundColor: 'var(--ry-green)' }}
               >
                 {sending ? <><Loader2 size={16} className="animate-spin" /> Sending...</> : <>Get OTP <ChevronRight size={16} /></>}
               </button>
 
-              {!recaptchaReady && !recaptchaLoading && !recaptchaError && (
-                <p className="text-center text-xs" style={{ color: 'var(--text-subtle)' }}>
-                  Check the box above to continue
-                </p>
-              )}
-
               <p className="flex items-start gap-2 text-xs" style={{ color: 'var(--text-subtle)' }}>
                 <Shield size={12} className="flex-shrink-0 mt-0.5" />
                 Your number is used only for login and is never shared.
               </p>
-
             </div>
           )}
 
@@ -309,6 +219,15 @@ export default function LoginPage() {
                 style={{ backgroundColor: 'var(--ry-green)' }}
               >
                 {verifying ? <><Loader2 size={16} className="animate-spin" /> Verifying...</> : 'Verify OTP'}
+              </button>
+
+              <button
+                onClick={handleSendOtp}
+                disabled={sending}
+                className="w-full text-sm text-center"
+                style={{ color: 'var(--text-subtle)' }}
+              >
+                {sending ? 'Resending…' : 'Resend OTP'}
               </button>
             </div>
           )}
@@ -398,7 +317,6 @@ export default function LoginPage() {
 
         </div>
       </div>
-
     </div>
   );
 }
