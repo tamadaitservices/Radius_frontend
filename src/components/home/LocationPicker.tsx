@@ -9,32 +9,31 @@ interface Props {
 }
 
 const MAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY!;
+const MAPS_SRC = `https://maps.googleapis.com/maps/api/js?key=${MAPS_KEY}&libraries=places`;
 
-let scriptLoaded = false;
-let scriptLoading = false;
-const onLoadCallbacks: (() => void)[] = [];
-
-const onErrorCallbacks: (() => void)[] = [];
-
+// HMR-safe loader: checks window.google and existing DOM script, never double-injects
 function loadGoogleMaps(cb: () => void, onError?: () => void) {
   if (typeof window === 'undefined') return;
-  if (scriptLoaded) { cb(); return; }
-  onLoadCallbacks.push(cb);
-  if (onError) onErrorCallbacks.push(onError);
-  if (scriptLoading) return;
-  scriptLoading = true;
+
+  // Already available (normal page load or HMR reload after first load)
+  if ((window as any).google?.maps) { cb(); return; }
+
+  // Script tag already in DOM but still loading (e.g. HMR reset our module vars)
+  const existing = document.querySelector(`script[src="${MAPS_SRC}"]`);
+  if (existing) {
+    const poll = setInterval(() => {
+      if ((window as any).google?.maps) { clearInterval(poll); cb(); }
+    }, 50);
+    existing.addEventListener('error', () => { clearInterval(poll); onError?.(); });
+    return;
+  }
+
+  // First load
   const s = document.createElement('script');
-  s.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_KEY}&libraries=places`;
+  s.src = MAPS_SRC;
   s.async = true;
-  s.onload = () => {
-    scriptLoaded = true;
-    scriptLoading = false;
-    onLoadCallbacks.splice(0).forEach((fn) => fn());
-  };
-  s.onerror = () => {
-    scriptLoading = false;
-    onErrorCallbacks.splice(0).forEach((fn) => fn());
-  };
+  s.onload = () => cb();
+  s.onerror = () => onError?.();
   document.head.appendChild(s);
 }
 
@@ -51,66 +50,65 @@ export default function LocationPicker({ onClose }: Props) {
   );
 
   useEffect(() => {
-    loadGoogleMaps(() => {
-      if (!mapDivRef.current) return;
-    }, () => setMapsError(true));
-    loadGoogleMaps(() => {
-      if (!mapDivRef.current) return;
-      const google = (window as any).google;
+    loadGoogleMaps(
+      () => {
+        if (!mapDivRef.current) return;
+        const g = (window as any).google;
+        if (!g?.maps) { setMapsError(true); return; }
 
-      const map = new google.maps.Map(mapDivRef.current, {
-        center: { lat: location.lat, lng: location.lng },
-        zoom: 14,
-        disableDefaultUI: true,
-        zoomControl: true,
-        gestureHandling: 'greedy',
-      });
-
-      const marker = new google.maps.Marker({
-        position: { lat: location.lat, lng: location.lng },
-        map,
-        draggable: true,
-        animation: google.maps.Animation.DROP,
-      });
-
-      marker.addListener('dragend', () => {
-        const pos = marker.getPosition();
-        reverseGeocode(pos.lat(), pos.lng(), google);
-      });
-
-      map.addListener('click', (e: any) => {
-        const lat = e.latLng.lat();
-        const lng = e.latLng.lng();
-        marker.setPosition({ lat, lng });
-        reverseGeocode(lat, lng, google);
-      });
-
-      // Places Autocomplete
-      if (inputRef.current) {
-        const ac = new google.maps.places.Autocomplete(inputRef.current, {
-          componentRestrictions: { country: 'in' },
-          fields: ['geometry', 'name', 'formatted_address'],
+        const map = new g.maps.Map(mapDivRef.current, {
+          center: { lat: location.lat, lng: location.lng },
+          zoom: 14,
+          disableDefaultUI: true,
+          zoomControl: true,
+          gestureHandling: 'greedy',
         });
-        ac.addListener('place_changed', () => {
-          const place = ac.getPlace();
-          if (!place.geometry?.location) return;
-          const lat = place.geometry.location.lat();
-          const lng = place.geometry.location.lng();
-          const lbl = place.name || place.formatted_address || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+
+        const marker = new g.maps.Marker({
+          position: { lat: location.lat, lng: location.lng },
+          map,
+          draggable: true,
+          animation: g.maps.Animation.DROP,
+        });
+
+        marker.addListener('dragend', () => {
+          const pos = marker.getPosition();
+          reverseGeocode(pos.lat(), pos.lng(), g);
+        });
+
+        map.addListener('click', (e: any) => {
+          const lat = e.latLng.lat();
+          const lng = e.latLng.lng();
           marker.setPosition({ lat, lng });
-          map.panTo({ lat, lng });
-          map.setZoom(15);
-          setLabel(lbl);
-          setManual(lat, lng, lbl);
+          reverseGeocode(lat, lng, g);
         });
-      }
 
-      mapRef.current = map;
-      markerRef.current = marker;
-    });
+        if (inputRef.current && g.maps.places?.Autocomplete) {
+          const ac = new g.maps.places.Autocomplete(inputRef.current, {
+            componentRestrictions: { country: 'in' },
+            fields: ['geometry', 'name', 'formatted_address'],
+          });
+          ac.addListener('place_changed', () => {
+            const place = ac.getPlace();
+            if (!place.geometry?.location) return;
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
+            const lbl = place.name || place.formatted_address || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+            marker.setPosition({ lat, lng });
+            map.panTo({ lat, lng });
+            map.setZoom(15);
+            setLabel(lbl);
+            setManual(lat, lng, lbl);
+          });
+        }
+
+        mapRef.current = map;
+        markerRef.current = marker;
+      },
+      () => setMapsError(true),
+    );
 
     return () => {
-      // cleanup handled by React unmount; map div is removed from DOM
       mapRef.current = null;
       markerRef.current = null;
     };
