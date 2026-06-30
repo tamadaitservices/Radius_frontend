@@ -266,7 +266,7 @@ export default function ShopPageClient({ id }: { id: string }) {
       {/* Reserve modal */}
       {selectedProduct && (
         <ReservationModal
-          shopId={id}
+          shopId={shop.id}
           product={selectedProduct}
           onClose={() => setSelectedProduct(null)}
         />

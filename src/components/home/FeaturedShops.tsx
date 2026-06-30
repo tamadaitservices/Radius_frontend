@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import ShopCard from '@/components/shop/ShopCard';
-import { Loader2, MapPin } from 'lucide-react';
+import { Loader2, MapPin, Store } from 'lucide-react';
 import { useLocation } from '@/hooks/useLocation';
 import { useZone } from '@/hooks/useZone';
 
@@ -33,7 +33,7 @@ export default function FeaturedShops() {
     );
   }
 
-  if (!data?.length) return null;
+  const locationLabel = location.label || (location.isDefault ? 'Vijayawada' : 'your area');
 
   return (
     <section>
@@ -46,11 +46,29 @@ export default function FeaturedShops() {
           </span>
         )}
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {data.map((shop: any) => (
-          <ShopCard key={shop.shopId} shop={shop} />
-        ))}
-      </div>
+      {data?.length ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {data.map((shop: any) => (
+            <ShopCard key={shop.shopId} shop={shop} />
+          ))}
+        </div>
+      ) : (
+        <div
+          className="flex flex-col items-center justify-center gap-3 py-12 rounded-2xl border"
+          style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
+        >
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center"
+            style={{ background: 'var(--surface-2)' }}
+          >
+            <Store size={26} style={{ color: 'var(--text-subtle)' }} />
+          </div>
+          <div className="text-center">
+            <p className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>No shops near {locationLabel}</p>
+            <p className="text-xs mt-1" style={{ color: 'var(--text-subtle)' }}>Try expanding your radius or changing location</p>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { X, LocateFixed, Loader2 } from 'lucide-react';
+import { X, LocateFixed, Loader2, MapPin, Search, AlertCircle } from 'lucide-react';
 import { useLocation } from '@/hooks/useLocation';
 
 interface Props {
@@ -11,14 +11,9 @@ interface Props {
 const MAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY!;
 const MAPS_SRC = `https://maps.googleapis.com/maps/api/js?key=${MAPS_KEY}&libraries=places`;
 
-// HMR-safe loader: checks window.google and existing DOM script, never double-injects
 function loadGoogleMaps(cb: () => void, onError?: () => void) {
   if (typeof window === 'undefined') return;
-
-  // Already available (normal page load or HMR reload after first load)
   if ((window as any).google?.maps) { cb(); return; }
-
-  // Script tag already in DOM but still loading (e.g. HMR reset our module vars)
   const existing = document.querySelector(`script[src="${MAPS_SRC}"]`);
   if (existing) {
     const poll = setInterval(() => {
@@ -27,8 +22,6 @@ function loadGoogleMaps(cb: () => void, onError?: () => void) {
     existing.addEventListener('error', () => { clearInterval(poll); onError?.(); });
     return;
   }
-
-  // First load
   const s = document.createElement('script');
   s.src = MAPS_SRC;
   s.async = true;
@@ -44,32 +37,54 @@ export default function LocationPicker({ onClose }: Props) {
   const markerRef = useRef<any>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [detecting, setDetecting] = useState(false);
+  const [gpsError, setGpsError] = useState<string | null>(null);
   const [mapsError, setMapsError] = useState(false);
   const [label, setLabel] = useState(
     location.label ?? (location.isDefault ? 'Vijayawada' : `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`)
   );
 
   useEffect(() => {
+    const handleMapsError = (e: ErrorEvent) => {
+      if (e.message?.includes('ApiTargetBlockedMapError') || e.message?.includes('MapsRequestError')) {
+        setMapsError(true);
+      }
+    };
+    window.addEventListener('error', handleMapsError);
+
     loadGoogleMaps(
       () => {
         if (!mapDivRef.current) return;
         const g = (window as any).google;
         if (!g?.maps) { setMapsError(true); return; }
 
-        const map = new g.maps.Map(mapDivRef.current, {
+        let map: any;
+        try { map = new g.maps.Map(mapDivRef.current, {
           center: { lat: location.lat, lng: location.lng },
           zoom: 14,
           disableDefaultUI: true,
           zoomControl: true,
           gestureHandling: 'greedy',
-        });
+          styles: [
+            { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+            { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+          ],
+        }); } catch { setMapsError(true); return; }
 
-        const marker = new g.maps.Marker({
+        let marker: any;
+        try { marker = new g.maps.Marker({
           position: { lat: location.lat, lng: location.lng },
           map,
           draggable: true,
           animation: g.maps.Animation.DROP,
-        });
+          icon: {
+            path: g.maps.SymbolPath.CIRCLE,
+            scale: 10,
+            fillColor: '#0c831f',
+            fillOpacity: 1,
+            strokeColor: '#ffffff',
+            strokeWeight: 3,
+          },
+        }); } catch { setMapsError(true); return; }
 
         marker.addListener('dragend', () => {
           const pos = marker.getPosition();
@@ -109,6 +124,7 @@ export default function LocationPicker({ onClose }: Props) {
     );
 
     return () => {
+      window.removeEventListener('error', handleMapsError);
       mapRef.current = null;
       markerRef.current = null;
     };
@@ -131,9 +147,23 @@ export default function LocationPicker({ onClose }: Props) {
     });
   };
 
-  const detectGPS = () => {
+  const detectGPS = async () => {
+    setGpsError(null);
+    if (!navigator.geolocation) {
+      setGpsError('GPS is not supported by your browser.');
+      return;
+    }
+
+    // Check permission state first if API available
+    if (navigator.permissions) {
+      const perm = await navigator.permissions.query({ name: 'geolocation' });
+      if (perm.state === 'denied') {
+        setGpsError('Location blocked. Click the 🔒 icon in the address bar to allow access.');
+        return;
+      }
+    }
+
     setDetecting(true);
-    if (!navigator.geolocation) { setDetecting(false); return; }
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const lat = pos.coords.latitude;
@@ -148,8 +178,17 @@ export default function LocationPicker({ onClose }: Props) {
         else setManual(lat, lng);
         setDetecting(false);
       },
-      () => { setDetecting(false); refresh(); },
-      { timeout: 8000 }
+      (err) => {
+        setDetecting(false);
+        if (err.code === err.PERMISSION_DENIED) {
+          setGpsError('Location blocked. Click the 🔒 icon in the address bar to allow access.');
+        } else if (err.code === err.TIMEOUT) {
+          setGpsError('Location timed out. Try again or search manually.');
+        } else {
+          setGpsError('Could not get location. Try searching manually.');
+        }
+      },
+      { timeout: 8000, enableHighAccuracy: true }
     );
   };
 
@@ -160,75 +199,148 @@ export default function LocationPicker({ onClose }: Props) {
   return (
     <div
       className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center"
-      style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)' }}
+      style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className="relative w-full sm:max-w-md mx-0 sm:mx-4 rounded-t-2xl sm:rounded-2xl flex flex-col overflow-hidden"
-        style={{ background: '#ffffff', boxShadow: '0 24px 60px rgba(0,0,0,0.25)', maxHeight: '92dvh' }}
+        className="relative w-full sm:max-w-md mx-0 sm:mx-4 rounded-t-3xl sm:rounded-3xl flex flex-col overflow-hidden"
+        style={{
+          background: 'var(--background)',
+          boxShadow: '0 32px 80px rgba(0,0,0,0.3)',
+          maxHeight: '92dvh',
+        }}
       >
+        {/* Drag handle (mobile) */}
+        <div className="flex justify-center pt-3 pb-1 sm:hidden flex-shrink-0">
+          <div className="w-10 h-1 rounded-full" style={{ background: 'var(--border)' }} />
+        </div>
+
         {/* Header */}
         <div
           className="flex items-center justify-between px-5 py-4 flex-shrink-0"
-          style={{ borderBottom: '1px solid #e5e7eb' }}
+          style={{ borderBottom: '1px solid var(--border)' }}
         >
-          <h2 className="font-bold text-base" style={{ color: '#111827' }}>
-            Set your location
-          </h2>
-          <button onClick={onClose} className="p-1 rounded-lg" style={{ color: '#6b7280' }}>
-            <X size={20} />
+          <div className="flex items-center gap-2">
+            <div
+              className="w-8 h-8 rounded-xl flex items-center justify-center"
+              style={{ background: 'var(--ry-green-light)' }}
+            >
+              <MapPin size={16} style={{ color: 'var(--ry-green)' }} />
+            </div>
+            <h2 className="font-bold text-base" style={{ color: 'var(--foreground)' }}>
+              Set your location
+            </h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors"
+            style={{ background: 'var(--surface-2)', color: 'var(--text-muted)' }}
+          >
+            <X size={16} />
           </button>
         </div>
 
         <div className="flex flex-col gap-3 p-4 overflow-y-auto flex-1">
-          {/* Search — Google Autocomplete attaches to this input */}
-          <input
-            ref={inputRef}
-            type="text"
-            placeholder="Search area, locality, landmark…"
-            className="w-full h-11 pl-4 pr-4 rounded-xl border-2 text-sm focus:outline-none transition-colors"
-            style={{
-              background: '#f9fafb',
-              borderColor: '#e5e7eb',
-              color: '#111827',
-            }}
-          />
+          {/* Search input */}
+          <div className="relative">
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+              style={{ color: 'var(--text-subtle)' }}
+            />
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder="Search area, locality, landmark…"
+              className="w-full h-11 pl-9 pr-4 rounded-2xl border text-sm focus:outline-none transition-all"
+              style={{
+                background: 'var(--surface)',
+                borderColor: 'var(--border)',
+                color: 'var(--foreground)',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = 'var(--ry-green)';
+                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(12,131,31,0.08)';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            />
+          </div>
 
           {/* Map */}
           {mapsError ? (
-            <div className="w-full rounded-xl flex-shrink-0 flex flex-col items-center justify-center gap-2 bg-gray-50 border border-gray-200 text-gray-500 text-sm text-center px-4" style={{ height: 260 }}>
-              <span className="text-2xl">🗺️</span>
-              <p className="font-medium text-gray-700">Map unavailable</p>
-              <p className="text-xs text-gray-400">Use GPS or type your city below to set location</p>
+            <div
+              className="w-full rounded-2xl flex flex-col items-center justify-center gap-2 flex-shrink-0"
+              style={{
+                height: 240,
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-muted)',
+              }}
+            >
+              <span className="text-3xl">🗺️</span>
+              <p className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>Map unavailable</p>
+              <p className="text-xs" style={{ color: 'var(--text-subtle)' }}>Use GPS or search to set your location</p>
             </div>
           ) : (
             <div
               ref={mapDivRef}
-              className="w-full rounded-xl overflow-hidden flex-shrink-0"
-              style={{ height: 260 }}
+              className="w-full rounded-2xl overflow-hidden flex-shrink-0"
+              style={{ height: 240, border: '1px solid var(--border)' }}
             />
           )}
 
-          {/* Current location */}
-          <p className="text-xs px-1" style={{ color: '#6b7280' }}>
-            📍 <span style={{ color: '#111827', fontWeight: 500 }}>{label}</span>
-          </p>
+          {/* Current location pill */}
+          <div
+            className="flex items-center gap-2 px-3 py-2.5 rounded-2xl"
+            style={{ background: 'var(--ry-green-light)', border: '1px solid rgba(12,131,31,0.12)' }}
+          >
+            <MapPin size={14} style={{ color: 'var(--ry-green)', flexShrink: 0 }} />
+            <span className="text-sm font-medium truncate" style={{ color: 'var(--ry-green)' }}>
+              {label}
+            </span>
+          </div>
 
-          {/* GPS */}
+          {/* GPS error */}
+          {gpsError && (
+            <div
+              className="flex items-start gap-2 px-3 py-2.5 rounded-2xl text-xs"
+              style={{ background: '#fff1f0', border: '1px solid #fecaca', color: '#b91c1c' }}
+            >
+              <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />
+              <span>{gpsError}</span>
+            </div>
+          )}
+
+          {/* GPS button */}
           <button
             onClick={detectGPS}
             disabled={detecting}
-            className="flex items-center justify-center gap-2 h-11 rounded-xl border-2 text-sm font-semibold transition-colors"
-            style={{ borderColor: 'var(--ry-green)', color: 'var(--ry-green)', background: 'transparent' }}
+            className="flex items-center justify-center gap-2 h-11 rounded-2xl border text-sm font-semibold transition-all"
+            style={{
+              borderColor: 'var(--ry-green)',
+              color: 'var(--ry-green)',
+              background: 'transparent',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'var(--ry-green-light)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+            }}
           >
             {detecting
-              ? <><Loader2 size={16} className="animate-spin" /> Detecting…</>
-              : <><LocateFixed size={16} /> Use my GPS location</>}
+              ? <><Loader2 size={15} className="animate-spin" /> Detecting location…</>
+              : <><LocateFixed size={15} /> Use my current location</>
+            }
           </button>
 
+          {/* Confirm */}
           <button
             onClick={onClose}
-            className="h-11 rounded-xl text-white text-sm font-bold"
+            className="h-11 rounded-2xl text-white text-sm font-bold transition-opacity hover:opacity-90 active:opacity-80"
             style={{ backgroundColor: 'var(--ry-green)' }}
           >
             Confirm location
