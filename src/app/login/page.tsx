@@ -30,27 +30,43 @@ export default function LoginPage() {
   const confirmationRef = useRef<any>(null);
   const recaptchaVerifierRef = useRef<any>(null);
   const [recaptchaReady, setRecaptchaReady] = useState(false);
+  const [recaptchaError, setRecaptchaError] = useState<string | null>(null);
+  const [recaptchaLoading, setRecaptchaLoading] = useState(true);
 
-  // Render reCAPTCHA widget on mount so it's verified before user clicks
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const { RecaptchaVerifier } = await import('firebase/auth');
-        const { auth } = await import('@/lib/firebase');
-        if (cancelled) return;
-        const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-          size: 'normal',
-          callback: () => { if (!cancelled) setRecaptchaReady(true); },
-          'expired-callback': () => { if (!cancelled) setRecaptchaReady(false); },
-        });
-        await verifier.render();
-        recaptchaVerifierRef.current = verifier;
-      } catch (e) {
-        console.error('[reCAPTCHA init]', e);
+  const initRecaptcha = async () => {
+    setRecaptchaLoading(true);
+    setRecaptchaError(null);
+    setRecaptchaReady(false);
+    try {
+      if (recaptchaVerifierRef.current) {
+        try { recaptchaVerifierRef.current.clear(); } catch {}
+        recaptchaVerifierRef.current = null;
       }
-    })();
-    return () => { cancelled = true; };
+      const { RecaptchaVerifier } = await import('firebase/auth');
+      const { auth } = await import('@/lib/firebase');
+      const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'normal',
+        callback: () => setRecaptchaReady(true),
+        'expired-callback': () => setRecaptchaReady(false),
+        'error-callback': (err: any) => {
+          console.error('[reCAPTCHA error-callback]', err);
+          setRecaptchaError('Verification widget failed. Try refreshing the page.');
+        },
+      });
+      await verifier.render();
+      recaptchaVerifierRef.current = verifier;
+    } catch (e: any) {
+      console.error('[reCAPTCHA init error]', e?.code, e?.message, e);
+      setRecaptchaError(`Verification failed to load (${e?.code || e?.message || 'unknown'}). Try refreshing.`);
+    } finally {
+      setRecaptchaLoading(false);
+    }
+  };
+
+  // Render reCAPTCHA widget on mount
+  useEffect(() => {
+    initRecaptcha();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSendOtp = async () => {
@@ -227,9 +243,22 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* reCAPTCHA widget — rendered here */}
-              <div className="flex justify-center">
-                <div id="recaptcha-container" />
+              {/* reCAPTCHA widget */}
+              <div className="flex flex-col items-center gap-2">
+                {recaptchaLoading && (
+                  <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-muted)' }}>
+                    <Loader2 size={14} className="animate-spin" /> Loading verification…
+                  </div>
+                )}
+                {recaptchaError && (
+                  <div className="w-full text-center space-y-2">
+                    <p className="text-xs text-red-500">{recaptchaError}</p>
+                    <button onClick={initRecaptcha} className="text-xs font-semibold underline" style={{ color: 'var(--ry-green)' }}>
+                      Retry
+                    </button>
+                  </div>
+                )}
+                <div id="recaptcha-container" style={{ minHeight: recaptchaLoading ? 0 : 78 }} />
               </div>
 
               <button
@@ -241,9 +270,9 @@ export default function LoginPage() {
                 {sending ? <><Loader2 size={16} className="animate-spin" /> Sending...</> : <>Get OTP <ChevronRight size={16} /></>}
               </button>
 
-              {!recaptchaReady && (
+              {!recaptchaReady && !recaptchaLoading && !recaptchaError && (
                 <p className="text-center text-xs" style={{ color: 'var(--text-subtle)' }}>
-                  Please complete the verification above to continue
+                  Check the box above to continue
                 </p>
               )}
 
