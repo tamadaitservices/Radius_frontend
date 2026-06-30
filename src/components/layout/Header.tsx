@@ -130,9 +130,12 @@ export default function Header() {
                     </Link>
                     <div className="flex items-center gap-2">
                       <Link href="/profile" className="flex items-center gap-1.5 text-sm font-medium" style={{ color: 'var(--text-muted)' }}>
-                        {(user as any).avatar
-                          ? <span className="text-lg leading-none">{(user as any).avatar}</span>
-                          : <User size={18} />}
+                        {(() => {
+                          const av = (user as any).avatar;
+                          if (!av) return <User size={18} />;
+                          if (av.startsWith('http')) return <img src={av} alt="" className="w-7 h-7 rounded-full object-cover" />;
+                          return <span className="text-lg leading-none">{av}</span>;
+                        })()}
                         <span className="hidden sm:inline">{user.name || 'Profile'}</span>
                       </Link>
                       <button onClick={logout} className="text-xs transition-colors" style={{ color: 'var(--text-subtle)' }}>Logout</button>
