@@ -848,14 +848,14 @@ export default function VendorDashboard() {
                                           type="tel"
                                           maxLength={4}
                                           placeholder="4-digit PIN"
-                                          value={pinEntry.value}
+                                          value={pinEntry!.value}
                                           onChange={(e) => setPinEntry({ id: r.id, value: e.target.value.replace(/\D/g, '').slice(0, 4) })}
                                           className="w-28 px-3 py-1.5 border border-blue-300 rounded-lg text-sm font-bold tracking-[0.3em] focus:outline-none focus:border-blue-500 text-center"
                                           autoFocus
                                         />
                                         <button
-                                          onClick={() => confirmPin.mutate({ id: r.id, pin: pinEntry.value })}
-                                          disabled={pinEntry.value.length !== 4 || confirmPin.isPending}
+                                          onClick={() => confirmPin.mutate({ id: r.id, pin: pinEntry!.value })}
+                                          disabled={pinEntry!.value.length !== 4 || confirmPin.isPending}
                                           className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold disabled:opacity-50 hover:bg-blue-700"
                                         >
                                           {confirmPin.isPending ? '…' : 'Confirm'}
