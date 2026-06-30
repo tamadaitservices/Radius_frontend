@@ -12,9 +12,3 @@ const firebaseConfig = {
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 export const auth = getAuth(app);
-
-// Bypass reCAPTCHA for Firebase test phone numbers only.
-// Remove this before going live with real users.
-if (typeof window !== 'undefined') {
-  auth.settings.appVerificationDisabledForTesting = true;
-}
