@@ -14,10 +14,13 @@ let scriptLoaded = false;
 let scriptLoading = false;
 const onLoadCallbacks: (() => void)[] = [];
 
-function loadGoogleMaps(cb: () => void) {
+const onErrorCallbacks: (() => void)[] = [];
+
+function loadGoogleMaps(cb: () => void, onError?: () => void) {
   if (typeof window === 'undefined') return;
   if (scriptLoaded) { cb(); return; }
   onLoadCallbacks.push(cb);
+  if (onError) onErrorCallbacks.push(onError);
   if (scriptLoading) return;
   scriptLoading = true;
   const s = document.createElement('script');
@@ -27,6 +30,10 @@ function loadGoogleMaps(cb: () => void) {
     scriptLoaded = true;
     scriptLoading = false;
     onLoadCallbacks.splice(0).forEach((fn) => fn());
+  };
+  s.onerror = () => {
+    scriptLoading = false;
+    onErrorCallbacks.splice(0).forEach((fn) => fn());
   };
   document.head.appendChild(s);
 }
@@ -38,11 +45,15 @@ export default function LocationPicker({ onClose }: Props) {
   const markerRef = useRef<any>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [detecting, setDetecting] = useState(false);
+  const [mapsError, setMapsError] = useState(false);
   const [label, setLabel] = useState(
     location.label ?? (location.isDefault ? 'Vijayawada' : `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`)
   );
 
   useEffect(() => {
+    loadGoogleMaps(() => {
+      if (!mapDivRef.current) return;
+    }, () => setMapsError(true));
     loadGoogleMaps(() => {
       if (!mapDivRef.current) return;
       const google = (window as any).google;
@@ -186,11 +197,19 @@ export default function LocationPicker({ onClose }: Props) {
           />
 
           {/* Map */}
-          <div
-            ref={mapDivRef}
-            className="w-full rounded-xl overflow-hidden flex-shrink-0"
-            style={{ height: 260 }}
-          />
+          {mapsError ? (
+            <div className="w-full rounded-xl flex-shrink-0 flex flex-col items-center justify-center gap-2 bg-gray-50 border border-gray-200 text-gray-500 text-sm text-center px-4" style={{ height: 260 }}>
+              <span className="text-2xl">🗺️</span>
+              <p className="font-medium text-gray-700">Map unavailable</p>
+              <p className="text-xs text-gray-400">Use GPS or type your city below to set location</p>
+            </div>
+          ) : (
+            <div
+              ref={mapDivRef}
+              className="w-full rounded-xl overflow-hidden flex-shrink-0"
+              style={{ height: 260 }}
+            />
+          )}
 
           {/* Current location */}
           <p className="text-xs px-1" style={{ color: '#6b7280' }}>
