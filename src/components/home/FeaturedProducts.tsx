@@ -58,7 +58,7 @@ export default function FeaturedProducts() {
             return (
               <Link
                 key={product.id}
-                href={`/shop/${product.shop.slug}`}
+                href={`/product/${product.id}`}
                 className="group rounded-xl overflow-hidden border transition-shadow hover:shadow-md"
                 style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
               >

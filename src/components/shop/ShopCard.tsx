@@ -74,7 +74,12 @@ export default function ShopCard({ shop }: ShopCardProps) {
         {shop.products.length > 0 && (
           <div className="mt-2 flex gap-2 overflow-x-auto no-scrollbar">
             {shop.products.slice(0, 3).map((p) => (
-              <div key={p.id} className="flex-shrink-0 w-20 text-center">
+              <Link
+                key={p.id}
+                href={`/product/${p.id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="flex-shrink-0 w-20 text-center hover:opacity-80 transition-opacity"
+              >
                 <div className="w-20 h-16 bg-gray-50 rounded-lg overflow-hidden relative">
                   {p.image ? (
                     <Image src={p.image} alt={p.name} fill className="object-cover" sizes="80px" />
@@ -84,7 +89,7 @@ export default function ShopCard({ shop }: ShopCardProps) {
                 </div>
                 <p className="text-xs text-gray-700 mt-1 leading-tight truncate">{p.name}</p>
                 <p className="text-xs font-bold text-gray-900">{formatPrice(p.price)}</p>
-              </div>
+              </Link>
             ))}
           </div>
         )}
