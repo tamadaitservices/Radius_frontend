@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Phone, MapPin, Star, Clock, Package, CheckCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -182,7 +183,7 @@ export default function ShopPageClient({ id }: { id: string }) {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {shop.products.map((product: any) => (
-              <div key={product.id} className="border border-gray-100 rounded-xl overflow-hidden hover:border-green-200 transition-colors">
+              <Link key={product.id} href={`/product/${product.id}`} className="border border-gray-100 rounded-xl overflow-hidden hover:border-green-200 hover:shadow-sm transition-all">
                 <div className="relative h-28 bg-gray-50">
                   {product.image ? (
                     <Image src={product.image} alt={product.name} fill className="object-cover" sizes="200px" />
@@ -208,6 +209,7 @@ export default function ShopPageClient({ id }: { id: string }) {
                   </div>
                   <a
                     href={`tel:${shop.phone}`}
+                    onClick={(e) => e.stopPropagation()}
                     className="w-full mt-2 flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-semibold border transition-colors"
                     style={{ borderColor: 'var(--ry-green)', color: 'var(--ry-green)' }}
                   >
@@ -216,7 +218,8 @@ export default function ShopPageClient({ id }: { id: string }) {
                   </a>
                   {product.inStock && shop.isCurrentlyOpen && (
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.preventDefault();
                         if (!user) { toast.error('Login to reserve'); return; }
                         setSelectedProduct(product);
                       }}
@@ -227,7 +230,7 @@ export default function ShopPageClient({ id }: { id: string }) {
                     </button>
                   )}
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
