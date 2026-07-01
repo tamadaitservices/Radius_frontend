@@ -136,6 +136,9 @@ export default function AdminPage() {
   const [editBannerPreviewUrl, setEditBannerPreviewUrl] = useState<string | null>(null);
   const editBannerFileRef = useRef<HTMLInputElement | null>(null);
   const shopImageRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const productImageRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [suspendModal, setSuspendModal] = useState<{ id: string; name: string; isSuspended: boolean } | null>(null);
+  const [suspendReason, setSuspendReason] = useState('');
   const [editingZone, setEditingZone] = useState<any>(null);
   const [editZoneForm, setEditZoneForm] = useState({ name: '', categories: [] as string[], bannerIds: [] as string[], polygon: [] as { lat: number; lng: number }[] });
 
@@ -506,6 +509,32 @@ export default function AdminPage() {
     onError: (e: any) => toast.error(e.response?.data?.error || 'Upload failed.'),
   });
 
+  const uploadProductImage = useMutation({
+    mutationFn: async ({ id, file }: { id: string; file: File }) => {
+      const fd = new FormData();
+      fd.append('image', file);
+      const r = await api.post(`/api/admin/products/${id}/image`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      return r.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-products'] });
+      toast.success('Product image updated.');
+    },
+    onError: (e: any) => toast.error(e.response?.data?.error || 'Upload failed.'),
+  });
+
+  const suspendShop = useMutation({
+    mutationFn: async ({ id, suspended, reason }: { id: string; suspended: boolean; reason?: string }) =>
+      api.patch(`/api/admin/shops/${id}/suspend`, { suspended, reason }),
+    onSuccess: (_, { suspended }) => {
+      qc.invalidateQueries({ queryKey: ['admin-shops'] });
+      setSuspendModal(null);
+      setSuspendReason('');
+      toast.success(suspended ? 'Shop suspended.' : 'Shop unsuspended.');
+    },
+    onError: (e: any) => toast.error(e.response?.data?.error || 'Failed.'),
+  });
+
   const toggleFeatured = useMutation({
     mutationFn: async ({ id, isFeatured, days }: { id: string; isFeatured: boolean; days?: number }) =>
       api.patch(`/api/admin/shops/${id}/featured`, { isFeatured, days }),
@@ -866,6 +895,9 @@ export default function AdminPage() {
                           {s.isFeatured && (
                             <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white bg-amber-500">Featured</span>
                           )}
+                          {s.isSuspended && (
+                            <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white bg-red-500">Suspended</span>
+                          )}
                           <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${s.isOpen ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
                             {s.isOpen ? 'Open' : 'Closed'}
                           </span>
@@ -917,6 +949,17 @@ export default function AdminPage() {
                           }`}
                         >
                           {s.isFeatured ? 'Unfeature' : 'Feature'}
+                        </button>
+                        <button
+                          onClick={() => { setSuspendModal({ id: s.id, name: s.name, isSuspended: s.isSuspended }); setSuspendReason(s.suspendedReason || ''); }}
+                          className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                            s.isSuspended
+                              ? 'bg-green-50 hover:bg-green-100 text-green-700 border-green-200'
+                              : 'bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-200'
+                          }`}
+                        >
+                          {s.isSuspended ? <CheckCircle size={12} /> : <XCircle size={12} />}
+                          {s.isSuspended ? 'Unsuspend' : 'Suspend'}
                         </button>
                         <button
                           onClick={() => { if (confirm(`Delete shop "${s.name}"? This cannot be undone.`)) deleteShop.mutate(s.id); }}
@@ -1462,8 +1505,23 @@ export default function AdminPage() {
                   : productsData?.products?.map((p: any) => (
                     <div key={p.id} className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
                       <div className="flex items-start gap-4">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0" style={{ background: '#10b981' }}>
-                          <Package size={18} />
+                        <div className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 border border-gray-200">
+                          {p.image
+                            ? <Image src={p.image} alt={p.name} fill className="object-cover" sizes="56px" />
+                            : <div className="w-full h-full flex items-center justify-center"><Package size={20} className="text-gray-400" /></div>
+                          }
+                          <label className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition-opacity cursor-pointer rounded-xl">
+                            <ImagePlus size={14} className="text-white" />
+                            <input
+                              type="file" accept="image/*" className="sr-only"
+                              ref={(el) => { productImageRefs.current[p.id] = el; }}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) uploadProductImage.mutate({ id: p.id, file });
+                                e.target.value = '';
+                              }}
+                            />
+                          </label>
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
@@ -2160,6 +2218,48 @@ export default function AdminPage() {
               {updateZone.isPending ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Save Changes
             </button>
             <button onClick={() => setEditingZone(null)} className="px-5 py-2.5 rounded-xl text-gray-600 font-bold text-sm bg-gray-100 hover:bg-gray-200">Cancel</button>
+          </div>
+        </div>
+      </AdminModal>
+    )}
+
+    {/* Suspend / Unsuspend Shop Modal */}
+    {suspendModal && (
+      <AdminModal
+        title={suspendModal.isSuspended ? `Unsuspend — ${suspendModal.name}` : `Suspend — ${suspendModal.name}`}
+        onClose={() => { setSuspendModal(null); setSuspendReason(''); }}
+      >
+        <div className="space-y-4">
+          {suspendModal.isSuspended ? (
+            <p className="text-sm text-gray-600">This will restore the shop and remove the suspension notice shown to the vendor.</p>
+          ) : (
+            <>
+              <p className="text-sm text-gray-600">This message will be shown to the shop vendor explaining why their shop has been suspended.</p>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Reason for suspension <span className="text-red-500">*</span></label>
+                <textarea
+                  value={suspendReason}
+                  onChange={e => setSuspendReason(e.target.value)}
+                  rows={4}
+                  placeholder="e.g. Your shop violated our community guidelines regarding product listings. Please contact support to resolve this."
+                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl text-sm focus:border-red-400 focus:outline-none resize-none text-gray-800"
+                />
+              </div>
+            </>
+          )}
+          <div className="flex gap-3 pt-1">
+            <button
+              onClick={() => suspendShop.mutate({ id: suspendModal.id, suspended: !suspendModal.isSuspended, reason: suspendReason })}
+              disabled={suspendShop.isPending || (!suspendModal.isSuspended && !suspendReason.trim())}
+              className={`flex-1 py-2.5 rounded-xl font-bold text-sm text-white transition-colors disabled:opacity-50 ${
+                suspendModal.isSuspended ? 'bg-green-600 hover:bg-green-700' : 'bg-red-500 hover:bg-red-600'
+              }`}
+            >
+              {suspendShop.isPending ? 'Saving…' : suspendModal.isSuspended ? 'Unsuspend Shop' : 'Suspend Shop'}
+            </button>
+            <button onClick={() => { setSuspendModal(null); setSuspendReason(''); }} className="px-5 py-2.5 rounded-xl text-gray-600 font-bold text-sm bg-gray-100 hover:bg-gray-200">
+              Cancel
+            </button>
           </div>
         </div>
       </AdminModal>

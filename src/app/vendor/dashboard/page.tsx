@@ -421,6 +421,22 @@ export default function VendorDashboard() {
         {/* Content */}
         <main className="flex-1 overflow-y-auto p-5">
 
+          {/* Suspension banner — shown across all sections when shop is suspended */}
+          {dashboard?.shops?.[0]?.isSuspended && (
+            <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 p-4 flex gap-3">
+              <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center">
+                <XCircle size={20} className="text-red-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-red-700 text-sm">Your shop has been suspended</p>
+                {dashboard.shops[0].suspendedReason && (
+                  <p className="text-sm text-red-600 mt-0.5">{dashboard.shops[0].suspendedReason}</p>
+                )}
+                <p className="text-xs text-red-500 mt-1">Please contact RadiuYes support to resolve this issue and restore your shop.</p>
+              </div>
+            </div>
+          )}
+
           {/* ── DASHBOARD ─────────────────────────────────────────── */}
           {section === 'dashboard' && (
             <div className="space-y-6">
