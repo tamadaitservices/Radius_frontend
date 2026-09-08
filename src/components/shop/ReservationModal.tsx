@@ -21,7 +21,7 @@ type Step = 'confirm' | 'no-mobile' | 'success';
 export default function ReservationModal({ shopId, product, onClose }: Props) {
   const [step, setStep] = useState<Step>('confirm');
   const [agreedPrice, setAgreedPrice] = useState<string>(product.price.toString());
-  const [reservation, setReservation] = useState<{ id: string; expiresAt: string } | null>(null);
+  const [reservation, setReservation] = useState<{ id: string; expiresAt: string; pin: string | null } | null>(null);
   const [timeLeft, setTimeLeft] = useState('');
   const { user } = useAuthStore();
   const router = useRouter();
@@ -163,6 +163,14 @@ export default function ReservationModal({ shopId, product, onClose }: Props) {
               <p className="text-4xl font-black text-orange-600 mt-1 pulse-green font-mono">{timeLeft}</p>
               <p className="text-xs text-orange-600 mt-1">Walk in before this expires</p>
             </div>
+
+            {reservation.pin && (
+              <div className="bg-green-50 rounded-2xl p-4">
+                <p className="text-xs text-green-700 font-semibold uppercase tracking-wider">Your purchase PIN</p>
+                <p className="text-3xl font-black text-green-700 mt-1 font-mono tracking-[0.3em]">{reservation.pin}</p>
+                <p className="text-xs text-green-700 mt-1">Show this to the vendor to confirm your purchase</p>
+              </div>
+            )}
 
             <a
               href={`https://www.google.com/maps/dir/?api=1&destination=${shopId}`}

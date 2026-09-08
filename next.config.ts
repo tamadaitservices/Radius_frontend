@@ -1,6 +1,11 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  // Allow the dev server's HMR/client-bootstrap resources to be requested from any
+  // device on the LAN (e.g. testing on a phone) — without this, Next.js silently
+  // blocks those resources for non-allowlisted origins, which breaks ALL client-side
+  // React interactivity (not just a CORS/network error) on pages loaded via LAN IP.
+  allowedDevOrigins: ['192.168.1.*'],
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'res.cloudinary.com' },

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Always point to Railway backend. Never use a relative/Vercel URL here or it loops.
-const BACKEND = 'https://radiuyes-production.up.railway.app';
+// Always point to the deployed backend. Never use a relative/Vercel URL here or it loops.
+const BACKEND = 'https://super-admin.radiuyes.com';
 
 async function proxy(req: NextRequest): Promise<NextResponse> {
   const { pathname, search } = req.nextUrl;

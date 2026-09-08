@@ -11,9 +11,15 @@ import { useAuthStore } from '@/store/auth';
 
 export default function VendorRegisterPage() {
   const router = useRouter();
-  const { setAuth } = useAuthStore();
+  const { setAuth, user: customerUser } = useAuthStore();
   const [showPass, setShowPass] = useState(false);
-  const [form, setForm] = useState({ phone: '', email: '', name: '', shopName: '', password: '' });
+  const [form, setForm] = useState({
+    phone: customerUser?.type !== 'vendor' ? (customerUser?.phone ?? '') : '',
+    email: '',
+    name: customerUser?.type !== 'vendor' ? (customerUser?.name ?? '') : '',
+    shopName: '',
+    password: '',
+  });
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));

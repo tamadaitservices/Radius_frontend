@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { Eye, EyeOff } from 'lucide-react';
@@ -14,14 +14,16 @@ export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user?.role === 'ADMIN') router.replace('/admin');
   }, [user]);
 
   const login = useMutation({
-    mutationFn: async () => {
-      const res = await api.post('/api/auth/admin/login', { email, password });
+    mutationFn: async (vars: { email: string; password: string }) => {
+      const res = await api.post('/api/auth/admin/login', vars);
       return res.data;
     },
     onSuccess: (data) => {
@@ -36,7 +38,14 @@ export default function AdminLoginPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (validEmail && password) login.mutate();
+    // Read straight from the DOM — browser autofill/password managers set the
+    // input value directly without always firing React's onChange, so `email`
+    // and `password` state can lag behind what's actually in the fields.
+    const currentEmail = emailRef.current?.value ?? email;
+    const currentPassword = passwordRef.current?.value ?? password;
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(currentEmail) && currentPassword) {
+      login.mutate({ email: currentEmail, password: currentPassword });
+    }
   };
 
   const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -102,6 +111,7 @@ export default function AdminLoginPage() {
                 Email address
               </label>
               <input
+                ref={emailRef}
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value.trim())}
@@ -128,6 +138,7 @@ export default function AdminLoginPage() {
               </label>
               <div className="relative">
                 <input
+                  ref={passwordRef}
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -160,11 +171,12 @@ export default function AdminLoginPage() {
             {/* Submit */}
             <button
               type="submit"
-              disabled={!validEmail || !password || login.isPending}
-              className="w-full py-3.5 rounded-xl text-white font-bold text-sm transition-all disabled:opacity-40 mt-2"
+              disabled={login.isPending}
+              className="w-full py-3.5 rounded-xl text-white font-extrabold text-base tracking-wide transition-all disabled:opacity-40 mt-2"
               style={{
-                background: login.isPending ? '#15803d' : '#16a34a',
-                boxShadow: '0 0 20px rgba(22,163,74,0.25)',
+                background: login.isPending ? '#16a34a' : '#22c55e',
+                border: '1.5px solid #4ade80',
+                boxShadow: '0 0 24px rgba(34,197,94,0.45)',
               }}
             >
               {login.isPending ? (

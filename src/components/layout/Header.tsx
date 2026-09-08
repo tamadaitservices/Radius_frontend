@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { MapPin, ShoppingBag, User, ChevronDown, Shield, Store, LocateFixed } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { MapPin, ShoppingBag, User, ChevronDown, Shield, Store, LocateFixed, Tag } from 'lucide-react';
 import { useAuthStore } from '@/store/auth';
 import { useLocation } from '@/hooks/useLocation';
+import { useHomeModeStore, type HomeMode } from '@/store/homeMode';
 import ThemeToggle from '@/components/ThemeToggle';
 import dynamic from 'next/dynamic';
 
@@ -14,8 +16,15 @@ const LocationPicker = dynamic(() => import('@/components/home/LocationPicker'),
 export default function Header() {
   const { user, clearAuth } = useAuthStore();
   const router = useRouter();
+  const pathname = usePathname();
   const { location } = useLocation();
   const [pickerOpen, setPickerOpen] = useState(false);
+  const { mode, setMode } = useHomeModeStore();
+
+  const goToMode = (m: HomeMode) => {
+    setMode(m);
+    if (pathname !== '/') router.push('/');
+  };
 
   const locationLabel = location.label
     ? location.label
@@ -62,6 +71,26 @@ export default function Header() {
             <span className="max-w-[120px] truncate hidden sm:block">{locationLabel}</span>
             <ChevronDown size={14} />
           </button>
+
+          {/* Shops / Pre-Owned mode toggle */}
+          <div className="inline-flex p-1 rounded-full border flex-shrink-0" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+            <button
+              onClick={() => goToMode('shops')}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-bold transition-colors"
+              style={mode === 'shops' ? { backgroundColor: 'var(--ry-green)', color: '#fff' } : { color: 'var(--text-muted)' }}
+            >
+              <Store size={13} />
+              <span className="hidden sm:inline">Shops</span>
+            </button>
+            <button
+              onClick={() => goToMode('preowned')}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-bold transition-colors"
+              style={mode === 'preowned' ? { backgroundColor: 'var(--ry-orange)', color: '#fff' } : { color: 'var(--text-muted)' }}
+            >
+              <Tag size={13} />
+              <span className="hidden sm:inline">Pre-Owned</span>
+            </button>
+          </div>
 
           {/* Search bar — hidden on mobile */}
           <div className="flex-1 max-w-2xl hidden md:block">

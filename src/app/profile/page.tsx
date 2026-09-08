@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Phone, ShoppingBag, CheckCircle, LogOut, ChevronRight, Pencil, X, Save, Mail, Lock } from 'lucide-react';
+import { Phone, ShoppingBag, CheckCircle, LogOut, ChevronRight, Pencil, X, Save, Mail, Lock, Tag } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
@@ -62,7 +62,7 @@ export function AvatarDisplay({ value, size = 64 }: { value?: string | null; siz
 }
 
 export default function ProfilePage() {
-  const { user, setAuth, clearAuth } = useAuthStore();
+  const { user, hasHydrated, setAuth, clearAuth } = useAuthStore();
   const router = useRouter();
   const qc = useQueryClient();
 
@@ -72,7 +72,7 @@ export default function ProfilePage() {
   const [editAvatar, setEditAvatar] = useState<string>('');
   const [editPhone, setEditPhone] = useState('');
 
-  useEffect(() => { if (!user) router.push('/login'); }, [user]);
+  useEffect(() => { if (hasHydrated && !user) router.push('/login'); }, [user, hasHydrated]);
 
   useEffect(() => {
     if (user) {
@@ -86,6 +86,12 @@ export default function ProfilePage() {
     queryKey: ['my-reservations'],
     queryFn: async () => { const r = await api.get('/api/reservations/my'); return r.data; },
     enabled: !!user,
+  });
+
+  const { data: myListings } = useQuery({
+    queryKey: ['my-listings'],
+    queryFn: async () => { const r = await api.get('/api/listings/my'); return r.data; },
+    enabled: !!user && (user as any).type !== 'vendor',
   });
 
   const completedCount = reservations?.filter((r: any) => r.status === 'COMPLETED').length || 0;
@@ -377,10 +383,54 @@ export default function ProfilePage() {
         )}
       </div>
 
+      {/* My Listings */}
+      {(user as any)?.type !== 'vendor' && (
+        <div className={card} style={cardStyle}>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-bold flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
+              <Tag size={16} /> My Listings
+            </h2>
+            <Link href="/sell/my-listings" className="text-sm font-semibold" style={{ color: 'var(--ry-green)' }}>View all</Link>
+          </div>
+
+          {!myListings?.length ? (
+            <div className="text-center py-8">
+              <p className="text-sm" style={{ color: 'var(--text-subtle)' }}>No listings yet. Got something to sell?</p>
+              <Link href="/sell/new" className="inline-block mt-3 px-4 py-2 rounded-xl text-white text-sm font-semibold" style={{ backgroundColor: 'var(--ry-orange)' }}>
+                Post a Listing
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {myListings.slice(0, 3).map((l: any) => (
+                <Link key={l.id} href="/sell/my-listings" className="flex gap-3 items-center p-3 rounded-xl transition-colors" style={{ background: 'var(--surface)' }}>
+                  <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0" style={{ background: 'var(--surface-2)' }}>
+                    {l.images?.[0]
+                      ? <Image src={l.images[0]} alt="" fill className="object-cover" sizes="40px" />
+                      : <div className="absolute inset-0 flex items-center justify-center text-lg">📦</div>}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold truncate" style={{ color: 'var(--foreground)' }}>{l.title}</p>
+                  </div>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                    l.status === 'AVAILABLE' ? 'bg-green-100 text-green-700' :
+                    l.status === 'RESERVED' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {l.status}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Quick links */}
       <div className="rounded-2xl border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
         {[
           { href: '/reservations', label: 'All Reservations', icon: '🔒' },
+          { href: '/sell', label: 'Pre-Owned', icon: '🏷️' },
+          { href: '/sell/my-requests', label: 'My Contact Requests', icon: '📞' },
           { href: '/', label: 'Browse Shops', icon: '🔍' },
         ].map((item) => (
           <Link key={item.href} href={item.href}

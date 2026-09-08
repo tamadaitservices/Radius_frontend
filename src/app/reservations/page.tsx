@@ -37,10 +37,10 @@ function CountdownBadge({ expiresAt, status }: { expiresAt: string; status: stri
 }
 
 export default function ReservationsPage() {
-  const { user } = useAuthStore();
+  const { user, hasHydrated } = useAuthStore();
   const router = useRouter();
 
-  useEffect(() => { if (!user) router.push('/login'); }, [user]);
+  useEffect(() => { if (hasHydrated && !user) router.push('/login'); }, [user, hasHydrated]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['my-reservations'],
@@ -90,10 +90,17 @@ export default function ReservationsPage() {
                   </div>
                 </div>
 
+                {res.status === 'ACCEPTED' && res.pin && (
+                  <div className="mt-3 flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ background: 'var(--ry-green-light)', border: '1px solid rgba(12,131,31,0.15)' }}>
+                    <span className="text-xs font-medium" style={{ color: 'var(--ry-green)' }}>Show this PIN to the vendor:</span>
+                    <span className="text-xl font-black tracking-[0.3em] ml-auto" style={{ color: 'var(--ry-green)' }}>{res.pin}</span>
+                  </div>
+                )}
+
                 {['PENDING', 'ACCEPTED'].includes(res.status) && res.shop?.phone && (
                   <a
                     href={`tel:${res.shop.phone}`}
-                    className="mt-3 flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-bold border"
+                    className="mt-2 flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-bold border"
                     style={{ borderColor: 'var(--ry-green)', color: 'var(--ry-green)', background: 'var(--ry-green-light)' }}
                   >
                     <Phone size={14} />

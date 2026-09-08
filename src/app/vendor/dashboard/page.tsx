@@ -45,7 +45,7 @@ const CATEGORY_LIST = ['ELECTRONICS','CLOTHING','GROCERY','HARDWARE','MEDICAL','
 const CATEGORY_LABELS: Record<string, string> = { ELECTRONICS:'Electronics', CLOTHING:'Clothing', GROCERY:'Grocery', HARDWARE:'Hardware', MEDICAL:'Medical', FOOD:'Food', BAKERY:'Bakery', FURNITURE:'Furniture', SPORTS:'Sports', BOOKS:'Books', BEAUTY:'Beauty', JEWELLERY:'Jewellery', TOYS:'Toys', AUTO:'Auto', OTHER:'Other' };
 
 export default function VendorDashboard() {
-  const { user, clearAuth } = useAuthStore();
+  const { user, hasHydrated, clearAuth } = useAuthStore();
   const router = useRouter();
   const qc = useQueryClient();
 
@@ -86,9 +86,10 @@ export default function VendorDashboard() {
   const [showNewPass, setShowNewPass] = useState(false);
 
   useEffect(() => {
+    if (!hasHydrated) return;
     if (!user) router.push('/vendor/login');
     else if (user.role !== 'VENDOR') router.push('/');
-  }, [user]);
+  }, [user, hasHydrated]);
 
   // Pusher real-time reservation notifications
   useEffect(() => {

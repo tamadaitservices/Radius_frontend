@@ -8,7 +8,7 @@ import {
   ImagePlus, Trash2, ToggleLeft, ToggleRight, CheckCircle, XCircle,
   Loader2, LogOut, ChevronRight, Menu, X, Search,
   MapPin, Megaphone, BookOpen, Globe, Plus, Pencil, Save, Package, Download, Sun, Moon, Settings, Eye, EyeOff,
-  Bell, Send, UserCheck, Building2, UsersRound
+  Bell, Send, UserCheck, Building2, UsersRound, Tag
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import AdminModal from '@/components/admin/AdminModal';
@@ -20,7 +20,7 @@ import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 
-type Section = 'dashboard' | 'vendors' | 'shops' | 'banners' | 'users' | 'reservations' | 'zones' | 'products' | 'reviews' | 'settings' | 'notifications';
+type Section = 'dashboard' | 'vendors' | 'shops' | 'listings' | 'banners' | 'users' | 'reservations' | 'zones' | 'products' | 'reviews' | 'settings' | 'notifications';
 
 interface NavItem {
   id: Section;
@@ -47,6 +47,7 @@ const NAV_GROUPS = [
       { id: 'vendors' as Section, label: 'Vendors', icon: <Store size={18} /> },
       { id: 'shops' as Section, label: 'Shops', icon: <MapPin size={18} /> },
       { id: 'products' as Section, label: 'Products', icon: <Package size={18} /> },
+      { id: 'listings' as Section, label: 'Listings', icon: <Tag size={18} /> },
     ],
   },
   {
@@ -84,7 +85,7 @@ const GRADIENTS = [
 ];
 
 export default function AdminPage() {
-  const { user, clearAuth } = useAuthStore();
+  const { user, hasHydrated, clearAuth } = useAuthStore();
   const router = useRouter();
   const qc = useQueryClient();
   const [section, setSection] = useState<Section>('dashboard');
@@ -142,14 +143,11 @@ export default function AdminPage() {
   const [editingZone, setEditingZone] = useState<any>(null);
   const [editZoneForm, setEditZoneForm] = useState({ name: '', categories: [] as string[], bannerIds: [] as string[], polygon: [] as { lat: number; lng: number }[] });
 
-  const [hydrated, setHydrated] = useState(false);
-  useEffect(() => { setHydrated(true); }, []);
-
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hasHydrated) return;
     if (user && user.role !== 'ADMIN') router.push('/');
     if (!user) router.push('/admin/login');
-  }, [user, hydrated]);
+  }, [user, hasHydrated]);
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['admin-stats'],
@@ -168,6 +166,25 @@ export default function AdminPage() {
     queryKey: ['admin-shops'],
     queryFn: async () => { const r = await api.get('/api/admin/shops'); return r.data; },
     enabled: section === 'shops' && user?.role === 'ADMIN',
+  });
+
+  const { data: listings, isLoading: listingsLoading } = useQuery({
+    queryKey: ['admin-listings'],
+    queryFn: async () => { const r = await api.get('/api/admin/listings'); return r.data; },
+    enabled: section === 'listings' && user?.role === 'ADMIN',
+  });
+
+  const suspendListing = useMutation({
+    mutationFn: async ({ id, suspended, reason }: { id: string; suspended: boolean; reason?: string }) =>
+      api.patch(`/api/admin/listings/${id}/suspend`, { suspended, reason }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-listings'] }),
+    onError: () => toast.error('Failed to update listing.'),
+  });
+
+  const approveListing = useMutation({
+    mutationFn: async (id: string) => api.patch(`/api/admin/listings/${id}/approve`),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-listings'] }); toast.success('Listing approved — back live.'); },
+    onError: () => toast.error('Failed to approve listing.'),
   });
 
   const { data: banners, isLoading: bannersLoading } = useQuery({
@@ -214,7 +231,7 @@ export default function AdminPage() {
 
   const { data: settingsData, isLoading: settingsLoading } = useQuery({
     queryKey: ['admin-settings'],
-    queryFn: async () => { const r = await api.get('/api/admin/settings'); return r.data as Record<string, string>; },
+    queryFn: async () => { const r = await api.get('/api/admin/settings'); return r.data.settings as Record<string, string>; },
     enabled: section === 'settings' && user?.role === 'ADMIN',
   });
 
@@ -973,6 +990,79 @@ export default function AdminPage() {
                   </div>
                 ))
               }
+            </div>
+          )}
+
+          {/* ── LISTINGS (individual sellers) ── */}
+          {section === 'listings' && (
+            <div className="space-y-3">
+              <p className="text-sm text-gray-500 mb-2">{listings?.length ?? 0} listings total</p>
+              {listingsLoading
+                ? <div className="flex justify-center py-16"><Loader2 className="animate-spin text-green-600" size={28} /></div>
+                : (listings ?? []).map((l: any) => (
+                  <div key={l.id} className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+                    <div className="flex items-start gap-4">
+                      <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0" style={{ background: '#f97316' }}>
+                        {l.title?.[0] || '📦'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-bold text-gray-900">{l.title}</p>
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                            l.status === 'AVAILABLE' ? 'bg-green-100 text-green-700' :
+                            l.status === 'RESERVED' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-500'
+                          }`}>
+                            {l.status}
+                          </span>
+                          {l.isSuspended && (
+                            <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white bg-red-500">Suspended</span>
+                          )}
+                          {l.pendingReview && (
+                            <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white bg-blue-500">Pending Review</span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-500 mt-0.5">₹{l.price} · {l.area}, {l.city}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">Seller: {l.seller?.name || 'Unknown'} · {l.seller?.phone}</p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {l.pendingReview && (
+                          <button
+                            onClick={() => approveListing.mutate(l.id)}
+                            disabled={approveListing.isPending}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold border border-blue-200"
+                          >
+                            <CheckCircle size={12} /> Approve
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            if (l.isSuspended) {
+                              suspendListing.mutate({ id: l.id, suspended: false });
+                            } else {
+                              const reason = window.prompt(`Reason for suspending "${l.title}"?`, 'Violates listing guidelines.');
+                              if (reason !== null) suspendListing.mutate({ id: l.id, suspended: true, reason });
+                            }
+                          }}
+                          disabled={suspendListing.isPending}
+                          className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                            l.isSuspended
+                              ? 'bg-green-50 hover:bg-green-100 text-green-700 border-green-200'
+                              : 'bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-200'
+                          }`}
+                        >
+                          {l.isSuspended ? <CheckCircle size={12} /> : <XCircle size={12} />}
+                          {l.isSuspended ? 'Unsuspend' : 'Suspend'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              }
+              {!listingsLoading && !listings?.length && (
+                <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
+                  <p className="text-sm text-gray-500">No individual-seller listings yet.</p>
+                </div>
+              )}
             </div>
           )}
 
@@ -1777,6 +1867,35 @@ export default function AdminPage() {
                     </div>
                   </div>
 
+                  {/* ── Pre-Owned / Classifieds ── */}
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+                    <h2 className="font-bold text-gray-900 text-sm">Pre-Owned / Classifieds</h2>
+                    <div className="flex items-center justify-between gap-4 max-w-md">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800">1 listing per 7 days limit</p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          When enabled, individual sellers can post only 1 new listing every 7 days. Disable to let them post unlimited listings.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={settingsForm.listing_rate_limit_enabled !== 'false'}
+                        onClick={() => setSettingsForm(f => ({
+                          ...f,
+                          listing_rate_limit_enabled: (f.listing_rate_limit_enabled ?? 'true') === 'false' ? 'true' : 'false',
+                        }))}
+                        className="relative flex-shrink-0 w-12 h-7 rounded-full transition-colors"
+                        style={{ backgroundColor: settingsForm.listing_rate_limit_enabled !== 'false' ? 'var(--ry-green, #16a34a)' : '#d1d5db' }}
+                      >
+                        <span
+                          className="absolute top-0.5 left-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform"
+                          style={{ transform: settingsForm.listing_rate_limit_enabled !== 'false' ? 'translateX(20px)' : 'translateX(0)' }}
+                        />
+                      </button>
+                    </div>
+                  </div>
+
                   {/* ── Plan Limits ── */}
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
                     <h2 className="font-bold text-gray-900 text-sm">Plan Shop Limits</h2>
@@ -1811,6 +1930,38 @@ export default function AdminPage() {
                         { key: 'smtp_user', label: 'SMTP Username / Gmail', sensitive: false },
                         { key: 'smtp_pass', label: 'App Password', sensitive: true },
                         { key: 'smtp_from', label: 'From Address', sensitive: false },
+                      ].map(({ key, label, sensitive }) => (
+                        <div key={key}>
+                          <label className="text-xs font-semibold text-gray-500 block mb-1">{label}</label>
+                          <div className="relative">
+                            <input
+                              type={sensitive && !settingsVisible[key] ? 'password' : 'text'}
+                              value={settingsForm[key] ?? ''}
+                              onChange={e => setSettingsForm(f => ({ ...f, [key]: e.target.value }))}
+                              onFocus={e => { if (e.target.value === MASKED) setSettingsForm(f => ({ ...f, [key]: '' })); }}
+                              className="w-full px-3 py-2.5 pr-10 border-2 border-gray-200 rounded-xl text-sm focus:border-green-600 focus:outline-none text-gray-800"
+                            />
+                            {sensitive && (
+                              <button type="button" onClick={() => setSettingsVisible(v => ({ ...v, [key]: !v[key] }))} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                {settingsVisible[key] ? <EyeOff size={16} /> : <Eye size={16} />}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* ── API: Resend ── */}
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+                    <div>
+                      <h2 className="font-bold text-gray-900 text-sm">Resend (Email API)</h2>
+                      <p className="text-xs text-gray-400 mt-0.5">Preferred over SMTP when set — works on hosts with blocked SMTP ports (e.g. Railway).</p>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {[
+                        { key: 'resend_api_key', label: 'API Key', sensitive: true },
+                        { key: 'resend_from', label: 'From Address', sensitive: false },
                       ].map(({ key, label, sensitive }) => (
                         <div key={key}>
                           <label className="text-xs font-semibold text-gray-500 block mb-1">{label}</label>

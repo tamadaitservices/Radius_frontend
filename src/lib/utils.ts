@@ -57,3 +57,36 @@ export const CATEGORY_LABELS: Record<string, string> = {
   AUTO: 'Auto',
   OTHER: 'Other',
 };
+
+export const LISTING_CATEGORY_ICONS: Record<string, string> = {
+  ELECTRONICS: '📱',
+  FURNITURE: '🛋️',
+  VEHICLES: '🚗',
+  FASHION: '👕',
+  BOOKS_HOBBIES: '📚',
+  APPLIANCES: '🔌',
+  SPORTS_FITNESS: '⚽',
+  KIDS_BABY: '🧸',
+  PROPERTY_RENTAL: '🏠',
+  OTHER: '📦',
+};
+
+export const LISTING_CATEGORY_LABELS: Record<string, string> = {
+  ELECTRONICS: 'Electronics',
+  FURNITURE: 'Furniture',
+  VEHICLES: 'Vehicles',
+  FASHION: 'Fashion',
+  BOOKS_HOBBIES: 'Books & Hobbies',
+  APPLIANCES: 'Appliances',
+  SPORTS_FITNESS: 'Sports & Fitness',
+  KIDS_BABY: 'Kids & Baby',
+  PROPERTY_RENTAL: 'Property / Rental',
+  OTHER: 'Other',
+};
+
+export const LISTING_CONDITION_LABELS: Record<string, string> = {
+  NEW: 'New',
+  LIKE_NEW: 'Like New',
+  USED_GOOD: 'Used - Good',
+  USED_FAIR: 'Used - Fair',
+};

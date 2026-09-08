@@ -4,18 +4,18 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 
-export function useVendorGuard() {
+export function useCustomerGuard() {
   const { user, hasHydrated } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
     if (!hasHydrated) return;
     if (user === null) {
-      router.push('/vendor/login');
-    } else if (user.type !== 'vendor') {
-      router.push('/');
+      router.push('/login');
+    } else if (user.type === 'vendor') {
+      router.push('/vendor/dashboard');
     }
   }, [user, hasHydrated]);
 
-  return { user, isVendor: hasHydrated && user?.type === 'vendor' };
+  return { user, isCustomer: hasHydrated && !!user && user.type !== 'vendor' };
 }
