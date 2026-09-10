@@ -1305,7 +1305,7 @@ export default function AdminPage() {
                     <div key={u.id} className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex items-center gap-4">
                       <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
                         style={{ background: '#3b82f6' }}>
-                        {(u.name ?? u.phone)[0]}
+                        {(u.name ?? u.phone)?.[0] ?? '?'}
                       </div>
                       <div className="flex-1">
                         <p className="font-bold text-gray-900 text-sm">{u.name ?? 'Anonymous'}</p>
