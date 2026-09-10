@@ -766,7 +766,7 @@ export default function AdminPage() {
                     <h2 className="font-bold text-gray-900 mb-3 text-sm">Recent Vendors</h2>
                     {recentActivity.vendors?.map((v: any) => (
                       <div key={v.id} className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0">
-                        <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ background: '#8b5cf6' }}>{v.name[0]}</div>
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ background: '#8b5cf6' }}>{v.name?.[0] ?? '?'}</div>
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-semibold text-gray-800 truncate">{v.name}</p>
                           <p className="text-xs text-gray-400">{v.shopName}</p>
@@ -810,7 +810,7 @@ export default function AdminPage() {
                       {/* Avatar */}
                       <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
                         style={{ background: '#8b5cf6' }}>
-                        {v.name[0]}
+                        {v.name?.[0] ?? '?'}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
@@ -904,7 +904,7 @@ export default function AdminPage() {
                     <div className="flex items-start gap-4">
                       <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
                         style={{ background: '#10b981' }}>
-                        {s.name[0]}
+                        {s.name?.[0] ?? '?'}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
