@@ -246,6 +246,27 @@ export default function PlaceAdminSection({ type }: Props) {
               <div key={p.id} className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
                 {editing?.id === p.id ? (
                   <div className="space-y-3">
+                    <label className="flex items-center gap-3 cursor-pointer w-fit">
+                      <div className="relative w-14 h-14 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden bg-gray-50 border border-gray-100">
+                        {p.images?.[0] ? (
+                          <Image src={p.images[0]} alt={p.name} fill className="object-cover" sizes="56px" />
+                        ) : (
+                          <span>{icons[p.category] || (type === 'FOOD' ? '🍴' : '📍')}</span>
+                        )}
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                          {uploadingId === p.id ? <Loader2 size={16} className="text-white animate-spin" /> : <ImagePlus size={16} className="text-white" />}
+                        </div>
+                        <input
+                          type="file" accept="image/*" className="sr-only"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) uploadImage.mutate({ id: p.id, file });
+                            e.target.value = '';
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs font-semibold text-gray-500">{p.images?.[0] ? 'Change photo' : 'Add photo'}</span>
+                    </label>
                     <FormFields f={editForm} setF={setEditForm} />
                     <div className="flex gap-2">
                       <button
