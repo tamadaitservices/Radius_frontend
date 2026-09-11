@@ -84,14 +84,16 @@ export default function PlaceDetailPage({ params }: { params: Promise<{ id: stri
           </div>
 
           <div className="flex gap-2 mt-4 flex-wrap">
-            <a
-              href={`tel:${place.phone}`}
-              className="flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-white flex-1 justify-center min-w-[120px]"
-              style={{ backgroundColor: accent }}
-            >
-              <Phone size={18} />
-              Call
-            </a>
+            {place.phone && (
+              <a
+                href={`tel:${place.phone}`}
+                className="flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-white flex-1 justify-center min-w-[120px]"
+                style={{ backgroundColor: accent }}
+              >
+                <Phone size={18} />
+                Call
+              </a>
+            )}
             {place.whatsapp && (
               <a
                 href={`https://wa.me/91${place.whatsapp}?text=${encodeURIComponent(`Hi! I found ${place.name} on RadiuYes.`)}`}

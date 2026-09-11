@@ -48,6 +48,7 @@ export default function PlaceAdminSection({ type }: Props) {
       type,
       latitude: Number(form.latitude),
       longitude: Number(form.longitude),
+      phone: form.phone || undefined,
       whatsapp: form.whatsapp || undefined,
       description: form.description || undefined,
     }),
@@ -64,6 +65,7 @@ export default function PlaceAdminSection({ type }: Props) {
       ...editForm,
       latitude: Number(editForm.latitude),
       longitude: Number(editForm.longitude),
+      phone: editForm.phone || undefined,
       whatsapp: editForm.whatsapp || undefined,
       description: editForm.description || undefined,
     }),
@@ -139,7 +141,7 @@ export default function PlaceAdminSection({ type }: Props) {
   const startEdit = (p: any) => {
     setEditing(p);
     setEditForm({
-      category: p.category, name: p.name, description: p.description || '', phone: p.phone,
+      category: p.category, name: p.name, description: p.description || '', phone: p.phone || '',
       whatsapp: p.whatsapp || '', address: p.address, area: p.area, city: p.city,
       latitude: String(p.latitude), longitude: String(p.longitude),
       openingTime: p.openingTime, closingTime: p.closingTime,
@@ -155,7 +157,7 @@ export default function PlaceAdminSection({ type }: Props) {
         {categories.map((c) => <option key={c} value={c}>{icons[c]} {labels[c]}</option>)}
       </select>
       <input value={f.name} onChange={(e) => setF((p) => ({ ...p, name: e.target.value }))} placeholder="Name *" className={inputCls} />
-      <input value={f.phone} onChange={(e) => setF((p) => ({ ...p, phone: e.target.value }))} placeholder="Phone *" className={inputCls} />
+      <input value={f.phone} onChange={(e) => setF((p) => ({ ...p, phone: e.target.value }))} placeholder="Phone (optional)" className={inputCls} />
       <input value={f.whatsapp} onChange={(e) => setF((p) => ({ ...p, whatsapp: e.target.value }))} placeholder="WhatsApp (optional)" className={inputCls} />
       <input value={f.area} onChange={(e) => setF((p) => ({ ...p, area: e.target.value }))} placeholder="Area *" className={inputCls} />
       <input value={f.city} onChange={(e) => setF((p) => ({ ...p, city: e.target.value }))} placeholder="City" className={inputCls} />
@@ -222,7 +224,7 @@ export default function PlaceAdminSection({ type }: Props) {
         <FormFields f={form} setF={setForm} />
         <button
           onClick={() => createPlace.mutate()}
-          disabled={!form.category || !form.name || !form.phone || !form.area || !form.address || !form.latitude || !form.longitude || createPlace.isPending}
+          disabled={!form.category || !form.name || !form.area || !form.address || !form.latitude || !form.longitude || createPlace.isPending}
           className="mt-4 flex items-center gap-2 px-6 py-2.5 rounded-xl text-white font-bold text-sm disabled:opacity-50 bg-green-600 hover:bg-green-700 transition-colors"
         >
           {createPlace.isPending ? <><Loader2 size={15} className="animate-spin" /> Creating…</> : `Create ${label}`}
