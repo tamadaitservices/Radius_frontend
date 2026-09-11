@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Image from 'next/image';
-import { Plus, Pencil, Trash2, Loader2, X, Check, Camera } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, X, Check, Camera, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { formatPrice } from '@/lib/utils';
@@ -134,6 +134,41 @@ function ProductsContent() {
     onError: (err: any) => toast.error(err.response?.data?.error || 'Failed to delete.'),
   });
 
+  const importFileRef = useRef<HTMLInputElement | null>(null);
+  const [importing, setImporting] = useState(false);
+
+  const importCsv = useMutation({
+    mutationFn: async (file: File) => {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('shopId', activeShopId);
+      setImporting(true);
+      const r = await api.post('/api/vendor/products/import', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      return r.data as { created: number; failed: number; errors: { row: number; error: string }[] };
+    },
+    onSuccess: (data) => {
+      if (data.created > 0) qc.invalidateQueries({ queryKey: ['vendor-products', activeShopId] });
+      if (data.failed === 0) {
+        toast.success(`Imported ${data.created} product${data.created === 1 ? '' : 's'}.`);
+      } else {
+        toast.error(`Imported ${data.created}, ${data.failed} failed. Row ${data.errors[0]?.row}: ${data.errors[0]?.error}`, { duration: 6000 });
+      }
+    },
+    onError: (err: any) => toast.error(err.response?.data?.error || 'Import failed.'),
+    onSettled: () => setImporting(false),
+  });
+
+  const downloadTemplate = () => {
+    const header = 'name,description,price,mrp,category,tags';
+    const example = 'Example Product,Optional description,499,599,,"tag1, tag2"';
+    const csv = `${header}\n${example}`;
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'products-import-template.csv'; a.click();
+    URL.revokeObjectURL(url);
+  };
+
   if (!isVendor) return null;
 
   if (!activeShopId) {
@@ -155,11 +190,34 @@ function ProductsContent() {
           {currentShop && <p className="text-sm text-gray-500">{currentShop.name}</p>}
         </div>
         {!adding && !editing && (
-          <button onClick={() => setAdding(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl text-white font-semibold text-sm" style={{ backgroundColor: 'var(--ry-green)' }}>
-            <Plus size={16} /> Add Product
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => importFileRef.current?.click()}
+              disabled={importing}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl border-2 border-gray-200 text-gray-600 font-semibold text-sm disabled:opacity-50"
+            >
+              {importing ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />} Import CSV
+            </button>
+            <input
+              ref={importFileRef}
+              type="file" accept=".csv,text/csv" className="sr-only"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) importCsv.mutate(file);
+                e.target.value = '';
+              }}
+            />
+            <button onClick={() => setAdding(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl text-white font-semibold text-sm" style={{ backgroundColor: 'var(--ry-green)' }}>
+              <Plus size={16} /> Add Product
+            </button>
+          </div>
         )}
       </div>
+      {!adding && !editing && (
+        <button onClick={downloadTemplate} className="text-xs font-semibold text-gray-400 hover:text-gray-600 mb-4 -mt-3 block">
+          Download CSV template
+        </button>
+      )}
 
       {/* Shop selector */}
       {shops?.length > 1 && (

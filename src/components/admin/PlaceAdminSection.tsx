@@ -100,6 +100,42 @@ export default function PlaceAdminSection({ type }: Props) {
     onSettled: () => setUploadingId(null),
   });
 
+  const importFileRef = useRef<HTMLInputElement | null>(null);
+  const [importing, setImporting] = useState(false);
+
+  const importCsv = useMutation({
+    mutationFn: async (file: File) => {
+      const fd = new FormData();
+      fd.append('file', file);
+      setImporting(true);
+      const r = await api.post(`/api/admin/places/import?type=${type}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      return r.data as { created: number; failed: number; errors: { row: number; error: string }[] };
+    },
+    onSuccess: (data) => {
+      if (data.created > 0) invalidate();
+      if (data.failed === 0) {
+        toast.success(`Imported ${data.created} ${label.toLowerCase()}${data.created === 1 ? '' : 's'}.`);
+      } else {
+        toast.error(`Imported ${data.created}, ${data.failed} failed. Row ${data.errors[0]?.row}: ${data.errors[0]?.error}`, { duration: 6000 });
+      }
+    },
+    onError: (err: any) => toast.error(err.response?.data?.error || 'Import failed.'),
+    onSettled: () => setImporting(false),
+  });
+
+  const downloadTemplate = () => {
+    const header = 'category,name,phone,whatsapp,address,area,city,latitude,longitude,openingTime,closingTime,description';
+    const example = type === 'FOOD'
+      ? 'BIRYANI,Example Restaurant,9666600000,,123 Main Road,MG Road,Vijayawada,16.5062,80.648,10:00,22:00,Optional description'
+      : 'PARK,Example Park,9666600000,,123 Main Road,Bhavani Nagar,Vijayawada,16.5062,80.648,06:00,20:00,Optional description';
+    const csv = `${header}\n${example}`;
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `${type.toLowerCase()}-import-template.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const startEdit = (p: any) => {
     setEditing(p);
     setEditForm({
@@ -146,6 +182,38 @@ export default function PlaceAdminSection({ type }: Props) {
 
   return (
     <div className="space-y-5">
+      {/* Bulk import */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+        <h2 className="font-bold text-gray-900 mb-1 flex items-center gap-2">
+          <ImagePlus size={18} className="text-blue-500" /> Bulk Import {label}s
+        </h2>
+        <p className="text-xs text-gray-500 mb-3">Upload a CSV to add many {label.toLowerCase()}s at once. Photos aren't included — add them per-{label.toLowerCase()} afterward.</p>
+        <div className="flex items-center gap-3 flex-wrap">
+          <button
+            onClick={downloadTemplate}
+            className="text-xs font-bold px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
+          >
+            Download CSV Template
+          </button>
+          <button
+            onClick={() => importFileRef.current?.click()}
+            disabled={importing}
+            className="flex items-center gap-2 text-xs font-bold px-3 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+          >
+            {importing ? <><Loader2 size={13} className="animate-spin" /> Importing…</> : 'Import CSV'}
+          </button>
+          <input
+            ref={importFileRef}
+            type="file" accept=".csv,text/csv" className="sr-only"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) importCsv.mutate(file);
+              e.target.value = '';
+            }}
+          />
+        </div>
+      </div>
+
       {/* Create form */}
       <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
         <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
