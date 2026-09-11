@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Store, Users, ShoppingBag, Star, TrendingUp,
   ImagePlus, Trash2, ToggleLeft, ToggleRight, CheckCircle, XCircle,
   Loader2, LogOut, ChevronRight, Menu, X, Search,
-  MapPin, Megaphone, BookOpen, Globe, Plus, Pencil, Save, Package, Download, Sun, Moon, Settings, Eye, EyeOff,
+  MapPin, Megaphone, BookOpen, Globe, Plus, Pencil, Save, Package, Download, Upload, Sun, Moon, Settings, Eye, EyeOff,
   Bell, Send, UserCheck, Building2, UsersRound, Tag, Landmark, UtensilsCrossed
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
@@ -141,6 +141,8 @@ export default function AdminPage() {
   const editBannerFileRef = useRef<HTMLInputElement | null>(null);
   const shopImageRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const productImageRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const vendorShopImportFileRef = useRef<HTMLInputElement | null>(null);
+  const [importingVendorsShops, setImportingVendorsShops] = useState(false);
   const [suspendModal, setSuspendModal] = useState<{ id: string; name: string; isSuspended: boolean } | null>(null);
   const [suspendReason, setSuspendReason] = useState('');
   const [editingZone, setEditingZone] = useState<any>(null);
@@ -543,6 +545,41 @@ export default function AdminPage() {
     onError: (e: any) => toast.error(e.response?.data?.error || 'Upload failed.'),
   });
 
+  const importVendorsShops = useMutation({
+    mutationFn: async (file: File) => {
+      const fd = new FormData();
+      fd.append('file', file);
+      setImportingVendorsShops(true);
+      const r = await api.post('/api/admin/vendors-shops/import', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      return r.data as { vendorsCreated: number; shopsCreated: number; failed: number; errors: { row: number; error: string }[] };
+    },
+    onSuccess: (data) => {
+      if (data.shopsCreated > 0) {
+        qc.invalidateQueries({ queryKey: ['admin-vendors'] });
+        qc.invalidateQueries({ queryKey: ['admin-shops'] });
+        qc.invalidateQueries({ queryKey: ['admin-stats'] });
+      }
+      if (data.failed === 0) {
+        toast.success(`Imported ${data.shopsCreated} shop${data.shopsCreated === 1 ? '' : 's'} (${data.vendorsCreated} new vendor${data.vendorsCreated === 1 ? '' : 's'}).`);
+      } else {
+        toast.error(`Imported ${data.shopsCreated}, ${data.failed} failed. Row ${data.errors[0]?.row}: ${data.errors[0]?.error}`, { duration: 6000 });
+      }
+    },
+    onError: (e: any) => toast.error(e.response?.data?.error || 'Import failed.'),
+    onSettled: () => setImportingVendorsShops(false),
+  });
+
+  const downloadVendorShopTemplate = () => {
+    const header = 'vendorPhone,vendorName,vendorEmail,shopName,shopPhone,whatsapp,category,address,area,city,latitude,longitude,openingTime,closingTime,description';
+    const example = '9666600000,Ravi Kumar,ravi@example.com,Ravi Electronics,,9666600000,ELECTRONICS,123 Main Road,MG Road,Vijayawada,16.5062,80.648,09:00,21:00,Optional description';
+    const csv = `${header}\n${example}`;
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'vendors-shops-import-template.csv'; a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const suspendShop = useMutation({
     mutationFn: async ({ id, suspended, reason }: { id: string; suspended: boolean; reason?: string }) =>
       api.patch(`/api/admin/shops/${id}/suspend`, { suspended, reason }),
@@ -873,12 +910,37 @@ export default function AdminPage() {
               <div className="flex items-center gap-3 flex-wrap mb-2">
                 <p className="text-sm text-gray-500 flex-1">{shops?.length ?? 0} shops total</p>
                 <button
+                  onClick={downloadVendorShopTemplate}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600"
+                >
+                  Download Import Template
+                </button>
+                <button
+                  onClick={() => vendorShopImportFileRef.current?.click()}
+                  disabled={importingVendorsShops}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {importingVendorsShops ? <><Loader2 size={13} className="animate-spin" /> Importing…</> : <><Upload size={13} /> Import Vendors & Shops</>}
+                </button>
+                <input
+                  ref={vendorShopImportFileRef}
+                  type="file" accept=".csv,text/csv" className="sr-only"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) importVendorsShops.mutate(file);
+                    e.target.value = '';
+                  }}
+                />
+                <button
                   onClick={() => exportCSV(shops ?? [], 'shops.csv', [{key:'name',label:'Name'},{key:'area',label:'Area'},{key:'city',label:'City'},{key:'vendor.name',label:'Vendor'},{key:'isOpen',label:'Open'},{key:'rating',label:'Rating'}])}
                   className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600"
                 >
                   <Download size={13} /> Export CSV
                 </button>
               </div>
+              <p className="text-xs text-gray-400 -mt-1">
+                Each row creates one shop; the vendor account is created automatically (or reused if the email already has one). Photos aren't included — add them per-shop afterward.
+              </p>
               <input
                 value={shopSearch}
                 onChange={(e) => setShopSearch(e.target.value)}
