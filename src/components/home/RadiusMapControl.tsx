@@ -7,7 +7,7 @@ import { useRadiusStore } from '@/store/radius';
 import { loadGoogleMaps } from '@/lib/googleMaps';
 
 const MIN_RADIUS = 1;
-const MAX_RADIUS = 30;
+const MAX_RADIUS = 100;
 const DEBOUNCE_MS = 400;
 
 export default function RadiusMapControl() {

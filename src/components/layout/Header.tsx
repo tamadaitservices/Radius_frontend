@@ -79,21 +79,6 @@ export default function Header() {
             <ChevronDown size={14} />
           </button>
 
-          {/* Shops / Pre-Owned / Places / Food mode toggle */}
-          <div className="inline-flex p-1 rounded-full border flex-shrink-0 overflow-x-auto no-scrollbar" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
-            {MODES.map((m) => (
-              <button
-                key={m.id}
-                onClick={() => goToMode(m.id)}
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-bold transition-colors flex-shrink-0"
-                style={mode === m.id ? { backgroundColor: m.color, color: '#fff' } : { color: 'var(--text-muted)' }}
-              >
-                <m.icon size={13} />
-                <span className="hidden sm:inline">{m.label}</span>
-              </button>
-            ))}
-          </div>
-
           {/* Search bar — hidden on mobile */}
           <div className="flex-1 max-w-2xl hidden md:block">
             <form
@@ -194,6 +179,29 @@ export default function Header() {
             )}
 
             <ThemeToggle />
+          </div>
+        </div>
+
+        {/* Shops / Pre-Owned / Places / Food mode tiles */}
+        <div className="max-w-7xl mx-auto px-4 pb-2.5">
+          <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar">
+            {MODES.map((m) => {
+              const active = mode === m.id;
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => goToMode(m.id)}
+                  className="flex flex-col items-center justify-center gap-1 w-16 sm:w-[76px] py-2 rounded-2xl text-xs font-bold border-[1.5px] transition-colors flex-shrink-0"
+                  style={active
+                    ? { backgroundColor: m.color, borderColor: m.color, color: '#fff' }
+                    : { background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-muted)' }
+                  }
+                >
+                  <m.icon size={18} color={active ? '#fff' : m.color} />
+                  <span>{m.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </header>
