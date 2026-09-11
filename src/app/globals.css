@@ -5,6 +5,10 @@
   --ry-green-light: #f0faf1;
   --ry-orange: #e84d0e;
   --ry-orange-light: #fff4f0;
+  --ry-blue: #2563eb;
+  --ry-blue-light: #eff6ff;
+  --ry-red: #dc2626;
+  --ry-red-light: #fef2f2;
   --ry-border: #e8e8e8;
 
   /* Light mode */
@@ -42,6 +46,8 @@
   --footer-border: #1a1a1a;
   --footer-heading: #ffffff;
   --ry-green-light: #0a1a0a;
+  --ry-blue-light: #0a1220;
+  --ry-red-light: #1a0a0a;
   --ry-border: #2a2a2a;
 }
 

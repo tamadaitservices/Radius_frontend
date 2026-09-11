@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type HomeMode = 'shops' | 'preowned';
+export type HomeMode = 'shops' | 'preowned' | 'places' | 'food';
 
 interface HomeModeState {
   mode: HomeMode;

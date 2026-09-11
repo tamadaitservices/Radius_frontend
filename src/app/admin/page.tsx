@@ -8,10 +8,11 @@ import {
   ImagePlus, Trash2, ToggleLeft, ToggleRight, CheckCircle, XCircle,
   Loader2, LogOut, ChevronRight, Menu, X, Search,
   MapPin, Megaphone, BookOpen, Globe, Plus, Pencil, Save, Package, Download, Sun, Moon, Settings, Eye, EyeOff,
-  Bell, Send, UserCheck, Building2, UsersRound, Tag
+  Bell, Send, UserCheck, Building2, UsersRound, Tag, Landmark, UtensilsCrossed
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import AdminModal from '@/components/admin/AdminModal';
+import PlaceAdminSection from '@/components/admin/PlaceAdminSection';
 
 const ZoneMap = dynamic(() => import('@/components/admin/ZoneMap'), { ssr: false, loading: () => <div className="h-96 rounded-xl bg-gray-100 animate-pulse" /> });
 import Image from 'next/image';
@@ -20,7 +21,7 @@ import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 
-type Section = 'dashboard' | 'vendors' | 'shops' | 'listings' | 'banners' | 'users' | 'reservations' | 'zones' | 'products' | 'reviews' | 'settings' | 'notifications';
+type Section = 'dashboard' | 'vendors' | 'shops' | 'listings' | 'places' | 'food' | 'banners' | 'users' | 'reservations' | 'zones' | 'products' | 'reviews' | 'settings' | 'notifications';
 
 interface NavItem {
   id: Section;
@@ -48,6 +49,8 @@ const NAV_GROUPS = [
       { id: 'shops' as Section, label: 'Shops', icon: <MapPin size={18} /> },
       { id: 'products' as Section, label: 'Products', icon: <Package size={18} /> },
       { id: 'listings' as Section, label: 'Listings', icon: <Tag size={18} /> },
+      { id: 'places' as Section, label: 'Places', icon: <Landmark size={18} /> },
+      { id: 'food' as Section, label: 'Food', icon: <UtensilsCrossed size={18} /> },
     ],
   },
   {
@@ -1065,6 +1068,12 @@ export default function AdminPage() {
               )}
             </div>
           )}
+
+          {/* ── PLACES ── */}
+          {section === 'places' && <PlaceAdminSection type="PLACE" />}
+
+          {/* ── FOOD ── */}
+          {section === 'food' && <PlaceAdminSection type="FOOD" />}
 
           {/* ── BANNERS ── */}
           {section === 'banners' && (
