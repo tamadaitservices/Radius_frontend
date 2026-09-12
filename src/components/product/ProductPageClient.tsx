@@ -11,15 +11,15 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import { formatPrice, CATEGORY_ICONS } from '@/lib/utils';
+import { formatPrice } from '@/lib/utils';
+import { useCategories } from '@/hooks/useCategories';
 import { useAuthStore } from '@/store/auth';
 import ReservationModal from '@/components/shop/ReservationModal';
-
-const ICONS = CATEGORY_ICONS as Record<string, string>;
 
 export default function ProductPageClient({ id }: { id: string }) {
   const { user } = useAuthStore();
   const router = useRouter();
+  const { icons: ICONS } = useCategories();
   const [reserving, setReserving] = useState(false);
 
   const { data, isLoading } = useQuery({

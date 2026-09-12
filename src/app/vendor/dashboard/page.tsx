@@ -13,6 +13,7 @@ import Image from 'next/image';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
+import { useCategories } from '@/hooks/useCategories';
 
 type Section = 'dashboard' | 'shop' | 'products' | 'reservations' | 'reviews' | 'profile';
 
@@ -41,13 +42,12 @@ const NAV_GROUPS = [
   },
 ];
 
-const CATEGORY_LIST = ['ELECTRONICS','CLOTHING','GROCERY','HARDWARE','MEDICAL','FOOD','BAKERY','FURNITURE','SPORTS','BOOKS','BEAUTY','JEWELLERY','TOYS','AUTO','OTHER'];
-const CATEGORY_LABELS: Record<string, string> = { ELECTRONICS:'Electronics', CLOTHING:'Clothing', GROCERY:'Grocery', HARDWARE:'Hardware', MEDICAL:'Medical', FOOD:'Food', BAKERY:'Bakery', FURNITURE:'Furniture', SPORTS:'Sports', BOOKS:'Books', BEAUTY:'Beauty', JEWELLERY:'Jewellery', TOYS:'Toys', AUTO:'Auto', OTHER:'Other' };
-
 export default function VendorDashboard() {
   const { user, hasHydrated, clearAuth } = useAuthStore();
   const router = useRouter();
   const qc = useQueryClient();
+  const { categories: categoryRows, labels: CATEGORY_LABELS } = useCategories();
+  const CATEGORY_LIST = categoryRows.map((c) => c.key);
 
   const [section, setSection] = useState<Section>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);

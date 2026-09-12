@@ -6,16 +6,19 @@ import ShopCard from '@/components/shop/ShopCard';
 import { Loader2, MapPin, Store } from 'lucide-react';
 import { useLocation } from '@/hooks/useLocation';
 import { useZone } from '@/hooks/useZone';
+import { useRadiusStore } from '@/store/radius';
+import RadiusMapControl from '@/components/home/RadiusMapControl';
 
 export default function FeaturedShops() {
   const { location, loading } = useLocation();
   const zone = useZone();
+  const { radiusKm } = useRadiusStore();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['featured-shops', location.lat, location.lng],
+    queryKey: ['featured-shops', location.lat, location.lng, radiusKm],
     queryFn: async () => {
       const res = await api.get('/api/search', {
-        params: { q: 'shop', lat: location.lat, lng: location.lng, radius: 10 },
+        params: { q: 'shop', lat: location.lat, lng: location.lng, radius: radiusKm },
       });
       return res.data.results;
     },
@@ -26,6 +29,7 @@ export default function FeaturedShops() {
     return (
       <section>
         <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--foreground)' }}>Shops Near You</h2>
+        <RadiusMapControl />
         <div className="flex items-center justify-center py-12">
           <Loader2 className="animate-spin text-green-600" size={32} />
         </div>
@@ -46,6 +50,7 @@ export default function FeaturedShops() {
           </span>
         )}
       </div>
+      <RadiusMapControl />
       {data?.length ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {data.map((shop: any) => (

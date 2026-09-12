@@ -33,24 +33,8 @@ export function proxy(req: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
-  // ── Main domain — block direct /admin and /vendor paths ────────
-  if (pathname.startsWith('/admin') || pathname.startsWith('/vendor')) {
-    const adminUrl = process.env.NEXT_PUBLIC_ADMIN_URL;
-    const vendorUrl = process.env.NEXT_PUBLIC_VENDOR_URL;
-
-    if (pathname.startsWith('/admin') && adminUrl) {
-      return NextResponse.redirect(new URL(adminUrl));
-    }
-    if (pathname.startsWith('/vendor') && vendorUrl) {
-      return NextResponse.redirect(new URL(vendorUrl));
-    }
-
-    // Env vars not set — just redirect to home
-    const url = req.nextUrl.clone();
-    url.pathname = '/';
-    return NextResponse.redirect(url);
-  }
-
+  // ── Main domain — /admin and /vendor paths work directly here.
+  // No admin./vendor. subdomains are deployed, so don't redirect away from them.
   return NextResponse.next();
 }
 

@@ -7,6 +7,7 @@ import FeaturedShops from '@/components/home/FeaturedShops';
 import FeaturedProducts from '@/components/home/FeaturedProducts';
 import HowItWorks from '@/components/home/HowItWorks';
 import PreOwnedBrowse from '@/components/listing/PreOwnedBrowse';
+import PlaceBrowse from '@/components/place/PlaceBrowse';
 import { useHomeModeStore } from '@/store/homeMode';
 
 export default function HomePage() {
@@ -14,7 +15,7 @@ export default function HomePage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-8">
-      {mode === 'shops' ? (
+      {mode === 'shops' && (
         <>
           <HeroBanner />
           <PromoBanners />
@@ -23,9 +24,10 @@ export default function HomePage() {
           <FeaturedProducts />
           <HowItWorks />
         </>
-      ) : (
-        <PreOwnedBrowse />
       )}
+      {mode === 'preowned' && <PreOwnedBrowse />}
+      {mode === 'places' && <PlaceBrowse type="PLACE" />}
+      {mode === 'food' && <PlaceBrowse type="FOOD" />}
     </div>
   );
 }

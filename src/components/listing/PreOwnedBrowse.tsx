@@ -6,8 +6,10 @@ import { useQuery } from '@tanstack/react-query';
 import { Loader2, Tag, Store, Plus, ArrowRight } from 'lucide-react';
 import api from '@/lib/api';
 import ListingCard from '@/components/listing/ListingCard';
+import RadiusMapControl from '@/components/home/RadiusMapControl';
 import { useLocation } from '@/hooks/useLocation';
 import { useAuthStore } from '@/store/auth';
+import { useRadiusStore } from '@/store/radius';
 import { LISTING_CATEGORY_ICONS, LISTING_CATEGORY_LABELS } from '@/lib/utils';
 
 const CATEGORIES = Object.keys(LISTING_CATEGORY_LABELS);
@@ -15,14 +17,15 @@ const CATEGORIES = Object.keys(LISTING_CATEGORY_LABELS);
 export default function PreOwnedBrowse() {
   const { location, loading } = useLocation();
   const { user } = useAuthStore();
+  const { radiusKm } = useRadiusStore();
   const isVendor = (user as any)?.type === 'vendor';
   const [category, setCategory] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['listings-nearby', location.lat, location.lng, category],
+    queryKey: ['listings-nearby', location.lat, location.lng, category, radiusKm],
     queryFn: async () => {
       const res = await api.get('/api/listings/nearby', {
-        params: { lat: location.lat, lng: location.lng, radius: 15, category: category || undefined, limit: 40 },
+        params: { lat: location.lat, lng: location.lng, radius: radiusKm, category: category || undefined, limit: 40 },
       });
       return res.data.listings;
     },
@@ -71,6 +74,8 @@ export default function PreOwnedBrowse() {
           <ArrowRight size={18} style={{ color: 'var(--ry-green)' }} className="flex-shrink-0" />
         </Link>
       )}
+
+      <RadiusMapControl />
 
       {/* Category filter */}
       <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">

@@ -8,7 +8,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import { formatPrice, CATEGORY_ICONS } from '@/lib/utils';
+import { formatPrice } from '@/lib/utils';
+import { useCategories } from '@/hooks/useCategories';
 import { useAuthStore } from '@/store/auth';
 import ReservationModal from '@/components/shop/ReservationModal';
 import ReviewForm from '@/components/shop/ReviewForm';
@@ -16,6 +17,7 @@ import ReviewForm from '@/components/shop/ReviewForm';
 export default function ShopPageClient({ id }: { id: string }) {
   const { user } = useAuthStore();
   const router = useRouter();
+  const { icons: CATEGORY_ICONS } = useCategories();
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
   const trackCall = () => { api.post(`/api/shops/${id}/call`).catch(() => {}); };

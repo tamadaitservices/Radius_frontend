@@ -22,41 +22,8 @@ export function getTimeLeft(expiresAt: string): string {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-export const CATEGORY_ICONS: Record<string, string> = {
-  ELECTRONICS: '📱',
-  CLOTHING: '👕',
-  GROCERY: '🛒',
-  HARDWARE: '🔧',
-  MEDICAL: '💊',
-  FOOD: '🍱',
-  BAKERY: '🥐',
-  FURNITURE: '🛋️',
-  SPORTS: '⚽',
-  BOOKS: '📚',
-  BEAUTY: '💄',
-  JEWELLERY: '💍',
-  TOYS: '🧸',
-  AUTO: '🚗',
-  OTHER: '🏪',
-};
-
-export const CATEGORY_LABELS: Record<string, string> = {
-  ELECTRONICS: 'Electronics',
-  CLOTHING: 'Clothing',
-  GROCERY: 'Grocery',
-  HARDWARE: 'Hardware',
-  MEDICAL: 'Medical',
-  FOOD: 'Food',
-  BAKERY: 'Bakery',
-  FURNITURE: 'Furniture',
-  SPORTS: 'Sports',
-  BOOKS: 'Books',
-  BEAUTY: 'Beauty',
-  JEWELLERY: 'Jewellery',
-  TOYS: 'Toys',
-  AUTO: 'Auto',
-  OTHER: 'Other',
-};
+// Shop category icons/labels are now admin-managed — see `useCategories()`
+// (hooks/useCategories.ts), which fetches them from `GET /api/categories`.
 
 export const LISTING_CATEGORY_ICONS: Record<string, string> = {
   ELECTRONICS: '📱',
@@ -89,4 +56,72 @@ export const LISTING_CONDITION_LABELS: Record<string, string> = {
   LIKE_NEW: 'Like New',
   USED_GOOD: 'Used - Good',
   USED_FAIR: 'Used - Fair',
+};
+
+export const PLACE_CATEGORY_ICONS: Record<string, string> = {
+  PARK: '🌳',
+  PLACE_OF_WORSHIP: '🛕',
+  MONUMENT: '🏛️',
+  TOURIST_SPOT: '📸',
+  ENTERTAINMENT: '🎬',
+  HOSPITAL: '🏥',
+  ATM_BANK: '🏧',
+  PETROL_PUMP: '⛽',
+  GOVERNMENT_OFFICE: '🏢',
+  POLICE_STATION: '👮',
+  PHARMACY: '💊',
+  SCHOOL: '🏫',
+  COLLEGE: '🎓',
+  COACHING_CENTER: '📖',
+  LIBRARY: '📚',
+  PLACE_OTHER: '📍',
+};
+
+export const PLACE_CATEGORY_LABELS: Record<string, string> = {
+  PARK: 'Park',
+  PLACE_OF_WORSHIP: 'Temple / Church',
+  MONUMENT: 'Monument',
+  TOURIST_SPOT: 'Tourist Spot',
+  ENTERTAINMENT: 'Entertainment',
+  HOSPITAL: 'Hospital',
+  ATM_BANK: 'ATM / Bank',
+  PETROL_PUMP: 'Petrol Pump',
+  GOVERNMENT_OFFICE: 'Government Office',
+  POLICE_STATION: 'Police Station',
+  PHARMACY: 'Pharmacy',
+  SCHOOL: 'School',
+  COLLEGE: 'College',
+  COACHING_CENTER: 'Coaching Center',
+  LIBRARY: 'Library',
+  PLACE_OTHER: 'Other',
+};
+
+export const FOOD_CATEGORY_ICONS: Record<string, string> = {
+  NORTH_INDIAN: '🍛',
+  SOUTH_INDIAN: '🥘',
+  CHINESE: '🥡',
+  CONTINENTAL: '🍝',
+  FAST_FOOD: '🍔',
+  BIRYANI: '🍚',
+  STREET_FOOD: '🌮',
+  BAKERY_CAFE: '☕',
+  ICE_CREAM_DESSERTS: '🍨',
+  JUICE_BEVERAGES: '🥤',
+  MULTI_CUISINE: '🍽️',
+  FOOD_OTHER: '🍴',
+};
+
+export const FOOD_CATEGORY_LABELS: Record<string, string> = {
+  NORTH_INDIAN: 'North Indian',
+  SOUTH_INDIAN: 'South Indian',
+  CHINESE: 'Chinese',
+  CONTINENTAL: 'Continental',
+  FAST_FOOD: 'Fast Food',
+  BIRYANI: 'Biryani',
+  STREET_FOOD: 'Street Food',
+  BAKERY_CAFE: 'Bakery / Cafe',
+  ICE_CREAM_DESSERTS: 'Ice Cream & Desserts',
+  JUICE_BEVERAGES: 'Juice & Beverages',
+  MULTI_CUISINE: 'Multi-Cuisine',
+  FOOD_OTHER: 'Other',
 };
