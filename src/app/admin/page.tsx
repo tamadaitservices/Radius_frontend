@@ -135,11 +135,16 @@ export default function AdminPage() {
   const [productSearch, setProductSearch] = useState('');
   const [productCategory, setProductCategory] = useState('');
   const [productPage, setProductPage] = useState(1);
+  const [creatingProduct, setCreatingProduct] = useState(false);
+  const [newProductForm, setNewProductForm] = useState({ shopId: '', name: '', description: '', price: '', mrp: '', category: '', tags: '' });
+  const [newProductSaved, setNewProductSaved] = useState<any>(null);
+  const newProductPhotoRef = useRef<HTMLInputElement | null>(null);
   const [vendorShopsFilter, setVendorShopsFilter] = useState<string | null>(null);
   const [editBannerFile, setEditBannerFile] = useState<File | null>(null);
   const [editBannerPreviewUrl, setEditBannerPreviewUrl] = useState<string | null>(null);
   const editBannerFileRef = useRef<HTMLInputElement | null>(null);
   const shopImageRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const editShopImageRef = useRef<HTMLInputElement | null>(null);
   const productImageRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const vendorShopImportFileRef = useRef<HTMLInputElement | null>(null);
   const [importingVendorsShops, setImportingVendorsShops] = useState(false);
@@ -170,7 +175,7 @@ export default function AdminPage() {
   const { data: shops, isLoading: shopsLoading } = useQuery({
     queryKey: ['admin-shops'],
     queryFn: async () => { const r = await api.get('/api/admin/shops'); return r.data; },
-    enabled: section === 'shops' && user?.role === 'ADMIN',
+    enabled: (section === 'shops' || section === 'products') && user?.role === 'ADMIN',
   });
 
   const { data: listings, isLoading: listingsLoading } = useQuery({
@@ -524,8 +529,9 @@ export default function AdminPage() {
       const r = await api.post(`/api/admin/shops/${id}/image`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
       return r.data;
     },
-    onSuccess: () => {
+    onSuccess: (data: any, { id }) => {
       qc.invalidateQueries({ queryKey: ['admin-shops'] });
+      setEditingShop((prev: any) => (prev && prev.id === id ? { ...prev, coverImage: data.coverImage } : prev));
       toast.success('Shop cover image updated.');
     },
     onError: (e: any) => toast.error(e.response?.data?.error || 'Upload failed.'),
@@ -544,6 +550,55 @@ export default function AdminPage() {
     },
     onError: (e: any) => toast.error(e.response?.data?.error || 'Upload failed.'),
   });
+
+  const createProduct = useMutation({
+    mutationFn: async () => {
+      const r = await api.post('/api/admin/products', {
+        ...newProductForm,
+        price: parseFloat(newProductForm.price),
+        mrp: newProductForm.mrp ? parseFloat(newProductForm.mrp) : undefined,
+      });
+      return r.data;
+    },
+    onSuccess: (product) => {
+      qc.invalidateQueries({ queryKey: ['admin-products'] });
+      toast.success('Product created — now add at least one photo.');
+      setNewProductSaved(product);
+    },
+    onError: (e: any) => toast.error(e.response?.data?.error || 'Failed to create product.'),
+  });
+
+  const uploadNewProductPhoto = useMutation({
+    mutationFn: async (file: File) => {
+      const fd = new FormData();
+      fd.append('image', file);
+      const r = await api.post(`/api/admin/products/${newProductSaved.id}/image`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      return r.data as { images: string[] };
+    },
+    onSuccess: (data) => {
+      setNewProductSaved((p: any) => (p ? { ...p, images: data.images } : p));
+      qc.invalidateQueries({ queryKey: ['admin-products'] });
+    },
+    onError: (e: any) => toast.error(e.response?.data?.error || 'Upload failed.'),
+  });
+
+  const deleteNewProductPhoto = useMutation({
+    mutationFn: async (url: string) => {
+      const r = await api.delete(`/api/admin/products/${newProductSaved.id}/image`, { data: { url } });
+      return r.data as { images: string[] };
+    },
+    onSuccess: (data) => {
+      setNewProductSaved((p: any) => (p ? { ...p, images: data.images } : p));
+      qc.invalidateQueries({ queryKey: ['admin-products'] });
+    },
+    onError: (e: any) => toast.error(e.response?.data?.error || 'Failed to remove.'),
+  });
+
+  const closeCreateProduct = () => {
+    setCreatingProduct(false);
+    setNewProductSaved(null);
+    setNewProductForm({ shopId: '', name: '', description: '', price: '', mrp: '', category: '', tags: '' });
+  };
 
   const importVendorsShops = useMutation({
     mutationFn: async (file: File) => {
@@ -1657,6 +1712,12 @@ export default function AdminPage() {
                     </select>
                     <span className="text-[10px] text-gray-400 px-1">Filters by shop category</span>
                   </div>
+                  <button
+                    onClick={() => setCreatingProduct(true)}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-white font-bold text-sm bg-green-600 hover:bg-green-700"
+                  >
+                    <Plus size={15} /> Add Product
+                  </button>
                 </div>
               </div>
               <div className="space-y-2">
@@ -2314,10 +2375,160 @@ export default function AdminPage() {
       </AdminModal>
     )}
 
+    {/* ── CREATE PRODUCT MODAL ── */}
+    {creatingProduct && (
+      <AdminModal title="Add Product" onClose={closeCreateProduct} width="max-w-lg">
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs font-semibold text-gray-500 block mb-1">Shop *</label>
+            <select
+              value={newProductForm.shopId}
+              onChange={(e) => setNewProductForm(f => ({ ...f, shopId: e.target.value }))}
+              disabled={!!newProductSaved}
+              className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:border-green-600 focus:outline-none text-gray-800 disabled:bg-gray-50 disabled:text-gray-500"
+            >
+              <option value="">Select a shop…</option>
+              {(shops ?? []).map((s: any) => <option key={s.id} value={s.id}>{s.name} — {s.area}</option>)}
+            </select>
+          </div>
+          <input
+            value={newProductForm.name} onChange={(e) => setNewProductForm(f => ({ ...f, name: e.target.value }))}
+            disabled={!!newProductSaved} placeholder="Product name *"
+            className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:border-green-600 focus:outline-none text-gray-800 disabled:bg-gray-50 disabled:text-gray-500"
+          />
+          <textarea
+            value={newProductForm.description} onChange={(e) => setNewProductForm(f => ({ ...f, description: e.target.value }))}
+            disabled={!!newProductSaved} placeholder="Description (optional)" rows={2}
+            className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:border-green-600 focus:outline-none text-gray-800 resize-none disabled:bg-gray-50 disabled:text-gray-500"
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
+              <input
+                type="number" value={newProductForm.price} onChange={(e) => setNewProductForm(f => ({ ...f, price: e.target.value }))}
+                disabled={!!newProductSaved} placeholder="Price *"
+                className="w-full pl-7 pr-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:border-green-600 focus:outline-none text-gray-800 disabled:bg-gray-50 disabled:text-gray-500"
+              />
+            </div>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
+              <input
+                type="number" value={newProductForm.mrp} onChange={(e) => setNewProductForm(f => ({ ...f, mrp: e.target.value }))}
+                disabled={!!newProductSaved} placeholder="MRP (strike-off)"
+                className="w-full pl-7 pr-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:border-green-600 focus:outline-none text-gray-800 disabled:bg-gray-50 disabled:text-gray-500"
+              />
+            </div>
+          </div>
+          <input
+            value={newProductForm.tags} onChange={(e) => setNewProductForm(f => ({ ...f, tags: e.target.value }))}
+            disabled={!!newProductSaved} placeholder="Tags: mobile, samsung, charger"
+            className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:border-green-600 focus:outline-none text-gray-800 disabled:bg-gray-50 disabled:text-gray-500"
+          />
+
+          {!newProductSaved ? (
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={() => createProduct.mutate()}
+                disabled={!newProductForm.shopId || !newProductForm.name || !newProductForm.price || createProduct.isPending}
+                className="flex-1 py-2.5 rounded-xl text-white font-bold text-sm disabled:opacity-50 bg-green-600 hover:bg-green-700"
+              >
+                {createProduct.isPending ? <Loader2 size={14} className="animate-spin mx-auto" /> : 'Save & Add Photos'}
+              </button>
+              <button onClick={closeCreateProduct} className="px-5 py-2.5 rounded-xl text-gray-600 font-bold text-sm bg-gray-100 hover:bg-gray-200">Cancel</button>
+            </div>
+          ) : (
+            <>
+              <div>
+                <label className="text-xs font-semibold text-gray-500 block mb-1.5">
+                  Photos ({(newProductSaved.images ?? []).length}/5) — at least 1 required
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {(newProductSaved.images ?? []).map((url: string) => (
+                    <div key={url} className="relative w-16 h-16 rounded-xl overflow-hidden border border-gray-200 bg-gray-100 flex-shrink-0">
+                      <Image src={url} alt="Product" fill className="object-cover" sizes="64px" />
+                      {(newProductSaved.images ?? []).length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => deleteNewProductPhoto.mutate(url)}
+                          disabled={deleteNewProductPhoto.isPending || uploadNewProductPhoto.isPending}
+                          className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center disabled:opacity-50"
+                        >
+                          <XCircle size={12} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {(newProductSaved.images ?? []).length < 5 && (
+                    <button
+                      type="button"
+                      onClick={() => newProductPhotoRef.current?.click()}
+                      disabled={uploadNewProductPhoto.isPending}
+                      className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 hover:border-green-500 hover:text-green-600 disabled:opacity-50 flex-shrink-0"
+                    >
+                      {uploadNewProductPhoto.isPending ? <Loader2 size={16} className="animate-spin" /> : <ImagePlus size={16} />}
+                    </button>
+                  )}
+                </div>
+                <input
+                  ref={newProductPhotoRef}
+                  type="file" accept="image/*" className="sr-only"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) uploadNewProductPhoto.mutate(file);
+                    e.target.value = '';
+                  }}
+                />
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={closeCreateProduct}
+                  disabled={(newProductSaved.images ?? []).length < 1}
+                  title={(newProductSaved.images ?? []).length < 1 ? 'Add at least 1 photo first' : undefined}
+                  className="flex-1 py-2.5 rounded-xl text-white font-bold text-sm bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Done
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </AdminModal>
+    )}
+
     {/* ── EDIT SHOP MODAL ── */}
     {editingShop && (
       <AdminModal title={`Edit Shop — ${editingShop.name}`} onClose={() => setEditingShop(null)} width="max-w-2xl">
         <div className="space-y-3">
+          <div>
+            <label className="text-xs font-semibold text-gray-500 block mb-1">Cover Image</label>
+            <div className="flex items-center gap-3">
+              <div className="relative w-28 h-16 rounded-xl overflow-hidden bg-gray-100 border border-gray-200 flex-shrink-0">
+                {editingShop.coverImage ? (
+                  <Image src={editingShop.coverImage} alt={editingShop.name} fill className="object-cover" sizes="112px" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center"><ImagePlus size={18} className="text-gray-400" /></div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => editShopImageRef.current?.click()}
+                disabled={uploadShopImage.isPending}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border border-gray-200 hover:bg-gray-50 text-gray-600 disabled:opacity-50"
+              >
+                {uploadShopImage.isPending ? <Loader2 size={13} className="animate-spin" /> : <ImagePlus size={13} />}
+                {editingShop.coverImage ? 'Replace' : 'Upload'}
+              </button>
+              <input
+                ref={editShopImageRef}
+                type="file" accept="image/*" className="sr-only"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) uploadShopImage.mutate({ id: editingShop.id, file });
+                  e.target.value = '';
+                }}
+              />
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-semibold text-gray-500 block mb-1">Shop Name</label>

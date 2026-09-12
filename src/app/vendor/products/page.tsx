@@ -4,7 +4,7 @@ import { useState, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Image from 'next/image';
-import { Plus, Pencil, Trash2, Loader2, X, Check, Camera, Upload } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, X, Check, Camera, Upload, ImagePlus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { formatPrice } from '@/lib/utils';
@@ -18,8 +18,86 @@ interface Product {
   price: number;
   mrp: number | null;
   image: string | null;
+  images: string[];
   inStock: boolean;
   tags: string[];
+}
+
+const MIN_PRODUCT_PHOTOS = 1;
+const MAX_PRODUCT_PHOTOS = 5;
+
+/** Photo gallery for a saved product — upload up to 5, remove down to 1. */
+function ProductPhotoGallery({ productId, images, onChange }: { productId: string; images: string[]; onChange: (images: string[]) => void }) {
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const upload = useMutation({
+    mutationFn: async (file: File) => {
+      const fd = new FormData();
+      fd.append('image', file);
+      setBusy(true);
+      const r = await api.post(`/api/vendor/products/${productId}/image`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      return r.data as { images: string[] };
+    },
+    onSuccess: (data) => onChange(data.images),
+    onError: (err: any) => toast.error(err.response?.data?.error || 'Upload failed.'),
+    onSettled: () => setBusy(false),
+  });
+
+  const remove = useMutation({
+    mutationFn: async (url: string) => {
+      setBusy(true);
+      const r = await api.delete(`/api/vendor/products/${productId}/image`, { data: { url } });
+      return r.data as { images: string[] };
+    },
+    onSuccess: (data) => onChange(data.images),
+    onError: (err: any) => toast.error(err.response?.data?.error || 'Failed to remove.'),
+    onSettled: () => setBusy(false),
+  });
+
+  return (
+    <div>
+      <label className="text-xs font-semibold text-gray-500 block mb-1.5">
+        Photos ({images.length}/{MAX_PRODUCT_PHOTOS}) — at least {MIN_PRODUCT_PHOTOS} required
+      </label>
+      <div className="flex flex-wrap gap-2">
+        {images.map((url) => (
+          <div key={url} className="relative w-16 h-16 rounded-xl overflow-hidden border border-gray-200 bg-gray-100 flex-shrink-0">
+            <Image src={url} alt="Product" fill className="object-cover" sizes="64px" />
+            {images.length > MIN_PRODUCT_PHOTOS && (
+              <button
+                type="button"
+                onClick={() => remove.mutate(url)}
+                disabled={busy}
+                className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center disabled:opacity-50"
+              >
+                <X size={11} />
+              </button>
+            )}
+          </div>
+        ))}
+        {images.length < MAX_PRODUCT_PHOTOS && (
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={busy}
+            className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 hover:border-green-500 hover:text-green-600 disabled:opacity-50 flex-shrink-0"
+          >
+            {busy ? <Loader2 size={16} className="animate-spin" /> : <ImagePlus size={16} />}
+          </button>
+        )}
+      </div>
+      <input
+        ref={fileRef}
+        type="file" accept="image/*" className="sr-only"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) upload.mutate(file);
+          e.target.value = '';
+        }}
+      />
+    </div>
+  );
 }
 
 function ProductForm({
@@ -39,24 +117,30 @@ function ProductForm({
     mrp: initial?.mrp?.toString() ?? '',
     tags: initial?.tags?.join(', ') ?? '',
   });
+  // Once created (or if editing), this holds the product whose photo gallery we manage.
+  const [savedProduct, setSavedProduct] = useState<Product | null>(initial ?? null);
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const save = useMutation({
     mutationFn: async () => {
       if (initial) {
-        await api.patch(`/api/vendor/products/${initial.id}`, { ...form, price: parseFloat(form.price), mrp: form.mrp ? parseFloat(form.mrp) : undefined });
-      } else {
-        await api.post('/api/vendor/products', { shopId, ...form, price: parseFloat(form.price), mrp: form.mrp ? parseFloat(form.mrp) : undefined });
+        const r = await api.patch(`/api/vendor/products/${initial.id}`, { ...form, price: parseFloat(form.price), mrp: form.mrp ? parseFloat(form.mrp) : undefined });
+        return r.data as Product;
       }
+      const r = await api.post('/api/vendor/products', { shopId, ...form, price: parseFloat(form.price), mrp: form.mrp ? parseFloat(form.mrp) : undefined });
+      return r.data as Product;
     },
-    onSuccess: () => {
+    onSuccess: (product) => {
       qc.invalidateQueries({ queryKey: ['vendor-products', shopId] });
-      toast.success(initial ? 'Product updated.' : 'Product added.');
-      onDone();
+      toast.success(initial ? 'Product updated.' : 'Product added — now add at least one photo.');
+      setSavedProduct(product);
     },
     onError: (err: any) => toast.error(err.response?.data?.error || 'Failed.'),
   });
+
+  const photoCount = savedProduct?.images?.length ?? 0;
+  const canFinish = photoCount >= MIN_PRODUCT_PHOTOS;
 
   return (
     <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200 space-y-3">
@@ -74,12 +158,40 @@ function ProductForm({
         </div>
       </div>
       <input value={form.tags} onChange={set('tags')} placeholder="Tags: mobile, samsung, charger" className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl text-sm focus:border-green-600 focus:outline-none" />
-      <div className="flex gap-2">
-        <button onClick={() => save.mutate()} disabled={!form.name || !form.price || save.isPending} className="flex-1 py-2 rounded-xl text-white font-bold text-sm disabled:opacity-50" style={{ backgroundColor: 'var(--ry-green)' }}>
-          {save.isPending ? 'Saving...' : initial ? 'Save Changes' : 'Add Product'}
-        </button>
-        <button onClick={onDone} className="px-4 py-2 rounded-xl border-2 border-gray-200 text-sm font-semibold text-gray-600">Cancel</button>
-      </div>
+
+      {!savedProduct ? (
+        <div className="flex gap-2">
+          <button onClick={() => save.mutate()} disabled={!form.name || !form.price || save.isPending} className="flex-1 py-2 rounded-xl text-white font-bold text-sm disabled:opacity-50" style={{ backgroundColor: 'var(--ry-green)' }}>
+            {save.isPending ? 'Saving...' : 'Save & Add Photos'}
+          </button>
+          <button onClick={onDone} className="px-4 py-2 rounded-xl border-2 border-gray-200 text-sm font-semibold text-gray-600">Cancel</button>
+        </div>
+      ) : (
+        <>
+          <ProductPhotoGallery
+            productId={savedProduct.id}
+            images={savedProduct.images}
+            onChange={(images) => {
+              setSavedProduct((p) => (p ? { ...p, images } : p));
+              qc.invalidateQueries({ queryKey: ['vendor-products', shopId] });
+            }}
+          />
+          <div className="flex gap-2">
+            <button onClick={() => save.mutate()} disabled={!form.name || !form.price || save.isPending} className="flex-1 py-2 rounded-xl border-2 border-gray-200 text-sm font-semibold text-gray-600 disabled:opacity-50">
+              {save.isPending ? 'Saving...' : 'Save Details'}
+            </button>
+            <button
+              onClick={onDone}
+              disabled={!canFinish}
+              title={!canFinish ? 'Add at least 1 photo first' : undefined}
+              className="flex-1 py-2 rounded-xl text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ backgroundColor: 'var(--ry-green)' }}
+            >
+              Done
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
