@@ -8,10 +8,9 @@ import { MapPin, Loader2, ArrowLeft, Camera } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import api from '@/lib/api';
-import { CATEGORY_LABELS } from '@/lib/utils';
 import { useVendorGuard } from '@/hooks/useVendorGuard';
+import { useCategories } from '@/hooks/useCategories';
 
-const CATEGORIES = Object.keys(CATEGORY_LABELS);
 const AREAS = [
   'Governorpet', 'Suryaraopet', 'Benz Circle', 'Auto Nagar', 'Moghalrajpuram',
   'Labbipet', 'Patamata', 'Gunadala', 'One Town', 'Gandhi Nagar',
@@ -22,6 +21,8 @@ export default function EditShopPage() {
   const { isVendor } = useVendorGuard();
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
+  const { categories: categoryRows, labels: CATEGORY_LABELS } = useCategories();
+  const CATEGORIES = categoryRows.map((c) => c.key);
   const [locating, setLocating] = useState(false);
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [form, setForm] = useState({

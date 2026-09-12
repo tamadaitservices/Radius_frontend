@@ -22,41 +22,8 @@ export function getTimeLeft(expiresAt: string): string {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-export const CATEGORY_ICONS: Record<string, string> = {
-  ELECTRONICS: '📱',
-  CLOTHING: '👕',
-  GROCERY: '🛒',
-  HARDWARE: '🔧',
-  MEDICAL: '💊',
-  FOOD: '🍱',
-  BAKERY: '🥐',
-  FURNITURE: '🛋️',
-  SPORTS: '⚽',
-  BOOKS: '📚',
-  BEAUTY: '💄',
-  JEWELLERY: '💍',
-  TOYS: '🧸',
-  AUTO: '🚗',
-  OTHER: '🏪',
-};
-
-export const CATEGORY_LABELS: Record<string, string> = {
-  ELECTRONICS: 'Electronics',
-  CLOTHING: 'Clothing',
-  GROCERY: 'Grocery',
-  HARDWARE: 'Hardware',
-  MEDICAL: 'Medical',
-  FOOD: 'Food',
-  BAKERY: 'Bakery',
-  FURNITURE: 'Furniture',
-  SPORTS: 'Sports',
-  BOOKS: 'Books',
-  BEAUTY: 'Beauty',
-  JEWELLERY: 'Jewellery',
-  TOYS: 'Toys',
-  AUTO: 'Auto',
-  OTHER: 'Other',
-};
+// Shop category icons/labels are now admin-managed — see `useCategories()`
+// (hooks/useCategories.ts), which fetches them from `GET /api/categories`.
 
 export const LISTING_CATEGORY_ICONS: Record<string, string> = {
   ELECTRONICS: '📱',

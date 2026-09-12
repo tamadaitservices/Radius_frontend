@@ -7,9 +7,7 @@ import { Loader2, SlidersHorizontal, MapPin, LocateFixed, X } from 'lucide-react
 import api from '@/lib/api';
 import ShopCard from '@/components/shop/ShopCard';
 import { useLocation } from '@/hooks/useLocation';
-import { CATEGORY_ICONS, CATEGORY_LABELS } from '@/lib/utils';
-
-const CATEGORIES = Object.keys(CATEGORY_LABELS);
+import { useCategories } from '@/hooks/useCategories';
 
 function SearchResults() {
   const searchParams = useSearchParams();
@@ -18,6 +16,8 @@ function SearchResults() {
   const categoryParam = searchParams.get('category') || '';
   const [radius, setRadius] = useState(5);
   const { location, loading: locLoading, refresh } = useLocation();
+  const { categories: categoryRows, labels: CATEGORY_LABELS, icons: CATEGORY_ICONS } = useCategories();
+  const CATEGORIES = categoryRows.map((c) => c.key);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['search', query, radius, location.lat, location.lng, categoryParam],

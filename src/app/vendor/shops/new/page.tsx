@@ -1,14 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
+import Image from 'next/image';
 import toast from 'react-hot-toast';
-import { MapPin, Loader2 } from 'lucide-react';
+import { MapPin, Loader2, ImagePlus } from 'lucide-react';
 import api from '@/lib/api';
-import { CATEGORY_LABELS } from '@/lib/utils';
-
-const CATEGORIES = Object.keys(CATEGORY_LABELS);
+import { useCategories } from '@/hooks/useCategories';
 
 const AREAS = [
   'Governorpet', 'Suryaraopet', 'Benz Circle', 'Auto Nagar', 'Moghalrajpuram',
@@ -18,7 +17,12 @@ const AREAS = [
 
 export default function NewShopPage() {
   const router = useRouter();
+  const { categories: categoryRows, labels: CATEGORY_LABELS } = useCategories();
+  const CATEGORIES = categoryRows.map((c) => c.key);
   const [locating, setLocating] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -64,7 +68,17 @@ export default function NewShopPage() {
         latitude: parseFloat(form.latitude),
         longitude: parseFloat(form.longitude),
       });
-      return res.data;
+      const shop = res.data;
+      if (imageFile) {
+        const fd = new FormData();
+        fd.append('image', imageFile);
+        try {
+          await api.post(`/api/vendor/shops/${shop.id}/image`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+        } catch {
+          toast.error('Shop created, but the cover image failed to upload. Add it from My Shop.');
+        }
+      }
+      return shop;
     },
     onSuccess: (shop) => {
       toast.success('Shop created! Now add your products.');
@@ -98,6 +112,31 @@ export default function NewShopPage() {
         <div>
           <label className="text-sm font-semibold text-gray-700 block mb-1">Description</label>
           <textarea value={form.description} onChange={set('description')} placeholder="What do you sell? Special offers?" rows={2} className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:outline-none text-sm resize-none" />
+        </div>
+
+        {/* Cover image */}
+        <div>
+          <label className="text-sm font-semibold text-gray-700 block mb-1">Cover Image</label>
+          <div className="relative w-full rounded-xl overflow-hidden mb-2" style={{ height: '140px', background: '#f3f4f6' }}>
+            {imagePreview
+              ? <Image src={imagePreview} alt="Cover preview" fill className="object-cover" sizes="600px" />
+              : <div className="flex items-center justify-center h-full text-gray-400"><ImagePlus size={28} /></div>
+            }
+          </div>
+          <label className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-bold cursor-pointer w-fit">
+            <ImagePlus size={14} /> {imageFile ? 'Replace Image' : 'Add Image (optional)'}
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) { setImageFile(f); setImagePreview(URL.createObjectURL(f)); }
+                e.target.value = '';
+              }}
+            />
+          </label>
         </div>
 
         {/* Category */}

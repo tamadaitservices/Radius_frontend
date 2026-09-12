@@ -8,11 +8,13 @@ import {
   ImagePlus, Trash2, ToggleLeft, ToggleRight, CheckCircle, XCircle,
   Loader2, LogOut, ChevronRight, Menu, X, Search,
   MapPin, Megaphone, BookOpen, Globe, Plus, Pencil, Save, Package, Download, Upload, Sun, Moon, Settings, Eye, EyeOff,
-  Bell, Send, UserCheck, Building2, UsersRound, Tag, Landmark, UtensilsCrossed
+  Bell, Send, UserCheck, Building2, UsersRound, Tag, Tags, Landmark, UtensilsCrossed
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import AdminModal from '@/components/admin/AdminModal';
 import PlaceAdminSection from '@/components/admin/PlaceAdminSection';
+import CategoryAdminSection from '@/components/admin/CategoryAdminSection';
+import { useCategories } from '@/hooks/useCategories';
 
 const ZoneMap = dynamic(() => import('@/components/admin/ZoneMap'), { ssr: false, loading: () => <div className="h-96 rounded-xl bg-gray-100 animate-pulse" /> });
 import Image from 'next/image';
@@ -21,7 +23,7 @@ import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 
-type Section = 'dashboard' | 'vendors' | 'shops' | 'listings' | 'places' | 'food' | 'banners' | 'users' | 'reservations' | 'zones' | 'products' | 'reviews' | 'settings' | 'notifications';
+type Section = 'dashboard' | 'vendors' | 'shops' | 'categories' | 'listings' | 'places' | 'food' | 'banners' | 'users' | 'reservations' | 'zones' | 'products' | 'reviews' | 'settings' | 'notifications';
 
 interface NavItem {
   id: Section;
@@ -47,6 +49,7 @@ const NAV_GROUPS = [
     items: [
       { id: 'vendors' as Section, label: 'Vendors', icon: <Store size={18} /> },
       { id: 'shops' as Section, label: 'Shops', icon: <MapPin size={18} /> },
+      { id: 'categories' as Section, label: 'Categories', icon: <Tags size={18} /> },
       { id: 'products' as Section, label: 'Products', icon: <Package size={18} /> },
       { id: 'listings' as Section, label: 'Listings', icon: <Tag size={18} /> },
       { id: 'places' as Section, label: 'Places', icon: <Landmark size={18} /> },
@@ -115,8 +118,8 @@ export default function AdminPage() {
   const bannerImageRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   // Constants
-  const CATEGORY_LIST = ['ELECTRONICS','CLOTHING','GROCERY','HARDWARE','MEDICAL','FOOD','BAKERY','FURNITURE','SPORTS','BOOKS','BEAUTY','JEWELLERY','TOYS','AUTO','OTHER'];
-  const CATEGORY_LABELS_MAP: Record<string, string> = { ELECTRONICS:'Electronics', CLOTHING:'Clothing', GROCERY:'Grocery', HARDWARE:'Hardware', MEDICAL:'Medical', FOOD:'Food', BAKERY:'Bakery', FURNITURE:'Furniture', SPORTS:'Sports', BOOKS:'Books', BEAUTY:'Beauty', JEWELLERY:'Jewellery', TOYS:'Toys', AUTO:'Auto', OTHER:'Other' };
+  const { categories: categoryRows, labels: CATEGORY_LABELS_MAP } = useCategories();
+  const CATEGORY_LIST = categoryRows.map((c) => c.key);
   const PLANS = ['FREE','STARTER','PRO','BUSINESS'];
 
   // Zone form state
@@ -1191,6 +1194,9 @@ export default function AdminPage() {
 
           {/* ── FOOD ── */}
           {section === 'food' && <PlaceAdminSection type="FOOD" />}
+
+          {/* ── CATEGORIES ── */}
+          {section === 'categories' && <CategoryAdminSection />}
 
           {/* ── BANNERS ── */}
           {section === 'banners' && (

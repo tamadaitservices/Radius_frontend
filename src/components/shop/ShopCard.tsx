@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { MapPin, Star } from 'lucide-react';
-import { formatDistance, formatPrice, CATEGORY_ICONS } from '@/lib/utils';
+import { formatDistance, formatPrice } from '@/lib/utils';
+import { useCategories } from '@/hooks/useCategories';
 
 interface ShopCardProps {
   shop: {
@@ -24,6 +25,7 @@ interface ShopCardProps {
 }
 
 export default function ShopCard({ shop }: ShopCardProps) {
+  const { icons: CATEGORY_ICONS } = useCategories();
   return (
     <Link
       href={`/shop/${shop.slug}`}
