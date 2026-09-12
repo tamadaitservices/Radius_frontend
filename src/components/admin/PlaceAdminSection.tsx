@@ -110,7 +110,7 @@ export default function PlaceAdminSection({ type }: Props) {
       const fd = new FormData();
       fd.append('file', file);
       setImporting(true);
-      const r = await api.post(`/api/admin/places/import?type=${type}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      const r = await api.post(`/api/admin/places/import?type=${type}`, fd, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 180000 });
       return r.data as { created: number; failed: number; errors: { row: number; error: string }[] };
     },
     onSuccess: (data) => {

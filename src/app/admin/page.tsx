@@ -605,7 +605,7 @@ export default function AdminPage() {
       const fd = new FormData();
       fd.append('file', file);
       setImportingVendorsShops(true);
-      const r = await api.post('/api/admin/vendors-shops/import', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      const r = await api.post('/api/admin/vendors-shops/import', fd, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 180000 });
       return r.data as { vendorsCreated: number; shopsCreated: number; failed: number; errors: { row: number; error: string }[] };
     },
     onSuccess: (data) => {
