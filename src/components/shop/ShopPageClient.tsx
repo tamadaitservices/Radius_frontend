@@ -17,7 +17,7 @@ import ReviewForm from '@/components/shop/ReviewForm';
 export default function ShopPageClient({ id }: { id: string }) {
   const { user } = useAuthStore();
   const router = useRouter();
-  const { icons: CATEGORY_ICONS } = useCategories();
+  const { icons: CATEGORY_ICONS, reservationEnabled: CATEGORY_RESERVATION_ENABLED } = useCategories();
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
   const trackCall = () => { api.post(`/api/shops/${id}/call`).catch(() => {}); };
@@ -218,7 +218,7 @@ export default function ShopPageClient({ id }: { id: string }) {
                     <Phone size={12} />
                     Call Shop
                   </a>
-                  {product.inStock && shop.isCurrentlyOpen && (
+                  {product.inStock && shop.isCurrentlyOpen && product.reservationEnabled && (CATEGORY_RESERVATION_ENABLED[shop.category] ?? true) && (
                     <button
                       onClick={(e) => {
                         e.preventDefault();

@@ -46,7 +46,7 @@ export default function VendorDashboard() {
   const { user, hasHydrated, clearAuth } = useAuthStore();
   const router = useRouter();
   const qc = useQueryClient();
-  const { categories: categoryRows, labels: CATEGORY_LABELS } = useCategories();
+  const { categories: categoryRows, labels: CATEGORY_LABELS, reservationEnabled: CATEGORY_RESERVATION_ENABLED } = useCategories();
   const CATEGORY_LIST = categoryRows.map((c) => c.key);
 
   const [section, setSection] = useState<Section>('dashboard');
@@ -70,7 +70,7 @@ export default function VendorDashboard() {
   // Product form
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
-  const [productForm, setProductForm] = useState({ name:'', description:'', price:'', mrp:'', tags:'' });
+  const [productForm, setProductForm] = useState({ name:'', description:'', price:'', mrp:'', tags:'', reservationEnabled: true });
   const productImageRef = useRef<Record<string, HTMLInputElement | null>>({});
   const newProductImageRef = useRef<HTMLInputElement | null>(null);
   const [newProductImageFile, setNewProductImageFile] = useState<File | null>(null);
@@ -134,6 +134,8 @@ export default function VendorDashboard() {
   });
 
   const shopId = dashboard?.shops?.[0]?.id;
+  const shopCategory = dashboard?.shops?.[0]?.category;
+  const categoryAllowsReservation = shopCategory ? (CATEGORY_RESERVATION_ENABLED[shopCategory] ?? true) : true;
 
   const { data: products, isLoading: productsLoading } = useQuery({
     queryKey: ['vendor-products', shopId],
@@ -229,6 +231,7 @@ export default function VendorDashboard() {
         price: parseFloat(productForm.price),
         mrp: productForm.mrp ? parseFloat(productForm.mrp) : undefined,
         tags: productForm.tags || undefined,
+        reservationEnabled: productForm.reservationEnabled,
       });
       if (newProductImageFile) {
         const fd = new FormData(); fd.append('image', newProductImageFile);
@@ -239,7 +242,7 @@ export default function VendorDashboard() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['vendor-products', shopId] });
       setShowProductForm(false);
-      setProductForm({ name:'', description:'', price:'', mrp:'', tags:'' });
+      setProductForm({ name:'', description:'', price:'', mrp:'', tags:'', reservationEnabled: true });
       setNewProductImageFile(null); setNewProductImagePreview(null);
       toast.success('Product added!');
     },
@@ -253,6 +256,7 @@ export default function VendorDashboard() {
       price: parseFloat(productForm.price),
       mrp: productForm.mrp ? parseFloat(productForm.mrp) : undefined,
       tags: productForm.tags || undefined,
+      reservationEnabled: productForm.reservationEnabled,
     }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['vendor-products', shopId] });
@@ -304,7 +308,7 @@ export default function VendorDashboard() {
 
   const openEditProduct = (p: any) => {
     setEditingProduct(p);
-    setProductForm({ name: p.name, description: p.description ?? '', price: String(p.price), mrp: p.mrp ? String(p.mrp) : '', tags: p.tags?.join(', ') ?? '' });
+    setProductForm({ name: p.name, description: p.description ?? '', price: String(p.price), mrp: p.mrp ? String(p.mrp) : '', tags: p.tags?.join(', ') ?? '', reservationEnabled: p.reservationEnabled ?? true });
     setShowProductForm(true);
   };
 
@@ -676,7 +680,7 @@ export default function VendorDashboard() {
               <div className="flex items-center justify-between">
                 <p className="text-sm text-gray-500">{products?.length ?? 0} products</p>
                 <button
-                  onClick={() => { setEditingProduct(null); setProductForm({ name:'', description:'', price:'', mrp:'', tags:'' }); setNewProductImageFile(null); setNewProductImagePreview(null); setShowProductForm(true); }}
+                  onClick={() => { setEditingProduct(null); setProductForm({ name:'', description:'', price:'', mrp:'', tags:'', reservationEnabled: true }); setNewProductImageFile(null); setNewProductImagePreview(null); setShowProductForm(true); }}
                   className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-bold">
                   <Plus size={15} /> Add Product
                 </button>
@@ -722,6 +726,21 @@ export default function VendorDashboard() {
                     <div className="col-span-2">
                       <label className="text-xs font-semibold text-gray-500 block mb-1">Tags (comma-separated)</label>
                       <input value={productForm.tags} onChange={e => setProductForm(f => ({ ...f, tags: e.target.value }))} placeholder="e.g. organic, fresh, local" className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:border-green-600 focus:outline-none text-gray-800" />
+                    </div>
+                    <div className="col-span-2">
+                      <label className={`flex items-center gap-2 text-sm font-semibold ${categoryAllowsReservation ? 'text-gray-700 cursor-pointer' : 'text-gray-400'}`}>
+                        <input
+                          type="checkbox"
+                          checked={categoryAllowsReservation && productForm.reservationEnabled}
+                          disabled={!categoryAllowsReservation}
+                          onChange={e => setProductForm(f => ({ ...f, reservationEnabled: e.target.checked }))}
+                          className="w-4 h-4 accent-green-600"
+                        />
+                        Allow customers to reserve this item
+                      </label>
+                      {!categoryAllowsReservation && (
+                        <p className="text-xs text-red-500 mt-1">Reservations are disabled for this shop&apos;s category by the admin.</p>
+                      )}
                     </div>
                   </div>
                   <div className="flex gap-2 mt-4">

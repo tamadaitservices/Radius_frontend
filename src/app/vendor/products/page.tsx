@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { formatPrice } from '@/lib/utils';
 import { useVendorGuard } from '@/hooks/useVendorGuard';
+import { useCategories } from '@/hooks/useCategories';
 
 interface Product {
   id: string;
@@ -21,6 +22,7 @@ interface Product {
   images: string[];
   inStock: boolean;
   tags: string[];
+  reservationEnabled: boolean;
 }
 
 const MIN_PRODUCT_PHOTOS = 1;
@@ -102,20 +104,25 @@ function ProductPhotoGallery({ productId, images, onChange }: { productId: strin
 
 function ProductForm({
   shopId,
+  shopCategory,
   initial,
   onDone,
 }: {
   shopId: string;
+  shopCategory?: string;
   initial?: Product;
   onDone: () => void;
 }) {
   const qc = useQueryClient();
+  const { reservationEnabled: CATEGORY_RESERVATION_ENABLED } = useCategories();
+  const categoryAllowsReservation = shopCategory ? (CATEGORY_RESERVATION_ENABLED[shopCategory] ?? true) : true;
   const [form, setForm] = useState({
     name: initial?.name ?? '',
     description: initial?.description ?? '',
     price: initial?.price?.toString() ?? '',
     mrp: initial?.mrp?.toString() ?? '',
     tags: initial?.tags?.join(', ') ?? '',
+    reservationEnabled: initial?.reservationEnabled ?? true,
   });
   // Once created (or if editing), this holds the product whose photo gallery we manage.
   const [savedProduct, setSavedProduct] = useState<Product | null>(initial ?? null);
@@ -125,10 +132,10 @@ function ProductForm({
   const save = useMutation({
     mutationFn: async () => {
       if (initial) {
-        const r = await api.patch(`/api/vendor/products/${initial.id}`, { ...form, price: parseFloat(form.price), mrp: form.mrp ? parseFloat(form.mrp) : undefined });
+        const r = await api.patch(`/api/vendor/products/${initial.id}`, { ...form, price: parseFloat(form.price), mrp: form.mrp ? parseFloat(form.mrp) : undefined, reservationEnabled: categoryAllowsReservation && form.reservationEnabled });
         return r.data as Product;
       }
-      const r = await api.post('/api/vendor/products', { shopId, ...form, price: parseFloat(form.price), mrp: form.mrp ? parseFloat(form.mrp) : undefined });
+      const r = await api.post('/api/vendor/products', { shopId, ...form, price: parseFloat(form.price), mrp: form.mrp ? parseFloat(form.mrp) : undefined, reservationEnabled: categoryAllowsReservation && form.reservationEnabled });
       return r.data as Product;
     },
     onSuccess: (product) => {
@@ -158,6 +165,21 @@ function ProductForm({
         </div>
       </div>
       <input value={form.tags} onChange={set('tags')} placeholder="Tags: mobile, samsung, charger" className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl text-sm focus:border-green-600 focus:outline-none" />
+      <div>
+        <label className={`flex items-center gap-2 text-sm font-semibold ${categoryAllowsReservation ? 'text-gray-700 cursor-pointer' : 'text-gray-400'}`}>
+          <input
+            type="checkbox"
+            checked={categoryAllowsReservation && form.reservationEnabled}
+            disabled={!categoryAllowsReservation}
+            onChange={(e) => setForm((f) => ({ ...f, reservationEnabled: e.target.checked }))}
+            className="w-4 h-4 accent-green-600"
+          />
+          Allow customers to reserve this item
+        </label>
+        {!categoryAllowsReservation && (
+          <p className="text-xs text-red-500 mt-1">Reservations are disabled for this shop&apos;s category by the admin.</p>
+        )}
+      </div>
 
       {!savedProduct ? (
         <div className="flex gap-2">
@@ -343,7 +365,7 @@ function ProductsContent() {
       {/* Add form */}
       {adding && (
         <div className="mb-4">
-          <ProductForm shopId={activeShopId} onDone={() => setAdding(false)} />
+          <ProductForm shopId={activeShopId} shopCategory={currentShop?.category} onDone={() => setAdding(false)} />
         </div>
       )}
 
@@ -364,7 +386,7 @@ function ProductsContent() {
         {products?.map((p) => (
           <div key={p.id}>
             {editing?.id === p.id ? (
-              <ProductForm shopId={activeShopId} initial={p} onDone={() => setEditing(null)} />
+              <ProductForm shopId={activeShopId} shopCategory={currentShop?.category} initial={p} onDone={() => setEditing(null)} />
             ) : (
               <div className="bg-white rounded-2xl border border-gray-100 p-4 flex gap-3 items-start">
                 {/* Image with upload */}

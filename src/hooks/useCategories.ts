@@ -10,6 +10,7 @@ export interface Category {
   icon: string;
   sortOrder: number;
   isActive: boolean;
+  reservationEnabled: boolean;
 }
 
 export function useCategories() {
@@ -22,6 +23,7 @@ export function useCategories() {
   const categories = data ?? [];
   const labels: Record<string, string> = Object.fromEntries(categories.map((c) => [c.key, c.label]));
   const icons: Record<string, string> = Object.fromEntries(categories.map((c) => [c.key, c.icon]));
+  const reservationEnabled: Record<string, boolean> = Object.fromEntries(categories.map((c) => [c.key, c.reservationEnabled]));
 
-  return { categories, labels, icons, isLoading };
+  return { categories, labels, icons, reservationEnabled, isLoading };
 }

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Loader2, Tags, Pencil, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Loader2, Tags, Pencil, Trash2, ToggleLeft, ToggleRight, CalendarCheck, CalendarX } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
 
@@ -13,6 +13,7 @@ interface CategoryRow {
   icon: string;
   sortOrder: number;
   isActive: boolean;
+  reservationEnabled: boolean;
 }
 
 const EMPTY_FORM = { key: '', label: '', icon: '🏪', sortOrder: '' };
@@ -67,6 +68,16 @@ export default function CategoryAdminSection() {
     mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) =>
       api.patch(`/api/categories/admin/${id}`, { isActive }),
     onSuccess: invalidate,
+    onError: (err: any) => toast.error(err.response?.data?.error || 'Failed.'),
+  });
+
+  const toggleReservation = useMutation({
+    mutationFn: async ({ id, reservationEnabled }: { id: string; reservationEnabled: boolean }) =>
+      api.patch(`/api/categories/admin/${id}`, { reservationEnabled }),
+    onSuccess: (_, { reservationEnabled }) => {
+      invalidate();
+      toast.success(reservationEnabled ? 'Reservations enabled for this category.' : 'Reservations disabled for this category.');
+    },
     onError: (err: any) => toast.error(err.response?.data?.error || 'Failed.'),
   });
 
@@ -172,10 +183,21 @@ export default function CategoryAdminSection() {
                         {!c.isActive && (
                           <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white bg-gray-400">Hidden</span>
                         )}
+                        {!c.reservationEnabled && (
+                          <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white bg-red-400">Reservations off</span>
+                        )}
                       </div>
                       <p className="text-xs text-gray-400 mt-0.5">Sort order {c.sortOrder}</p>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        onClick={() => toggleReservation.mutate({ id: c.id, reservationEnabled: !c.reservationEnabled })}
+                        disabled={toggleReservation.isPending}
+                        className="p-2 rounded-lg text-gray-500 hover:bg-gray-100"
+                        title={c.reservationEnabled ? 'Disable reservations for this category' : 'Enable reservations for this category'}
+                      >
+                        {c.reservationEnabled ? <CalendarCheck size={18} className="text-blue-600" /> : <CalendarX size={18} className="text-red-400" />}
+                      </button>
                       <button
                         onClick={() => toggleActive.mutate({ id: c.id, isActive: !c.isActive })}
                         disabled={toggleActive.isPending}

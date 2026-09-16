@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -19,8 +19,10 @@ import ReservationModal from '@/components/shop/ReservationModal';
 export default function ProductPageClient({ id }: { id: string }) {
   const { user } = useAuthStore();
   const router = useRouter();
-  const { icons: ICONS } = useCategories();
+  const { icons: ICONS, reservationEnabled: CATEGORY_RESERVATION_ENABLED } = useCategories();
   const [reserving, setReserving] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  useEffect(() => setActiveImageIndex(0), [id]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['product', id],
@@ -41,6 +43,9 @@ export default function ProductPageClient({ id }: { id: string }) {
   if (!data) return <div className="text-center py-20 text-gray-500">Product not found.</div>;
 
   const { shop, otherProducts = [], ...product } = data;
+  const canReserve = !!product.reservationEnabled && (CATEGORY_RESERVATION_ENABLED[shop.category] ?? true);
+  const images: string[] = product.images?.length ? product.images : product.image ? [product.image] : [];
+  const activeImage = images[Math.min(activeImageIndex, images.length - 1)];
 
   const discount = product.mrp && product.mrp > product.price
     ? Math.round((1 - product.price / product.mrp) * 100)
@@ -60,8 +65,8 @@ export default function ProductPageClient({ id }: { id: string }) {
         {/* Left: Product image */}
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
           <div className="relative aspect-square bg-gray-50">
-            {product.image ? (
-              <Image src={product.image} alt={product.name} fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" priority />
+            {activeImage ? (
+              <Image src={activeImage} alt={product.name} fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" priority />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center text-7xl">
                 {ICONS[product.category] || '🛍️'}
@@ -81,6 +86,19 @@ export default function ProductPageClient({ id }: { id: string }) {
               </span>
             )}
           </div>
+          {images.length > 1 && (
+            <div className="flex gap-2 p-3 overflow-x-auto">
+              {images.map((url, i) => (
+                <button
+                  key={url}
+                  onClick={() => setActiveImageIndex(i)}
+                  className={`relative flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-colors ${i === activeImageIndex ? 'border-green-600' : 'border-gray-100'}`}
+                >
+                  <Image src={url} alt={`${product.name} ${i + 1}`} fill className="object-cover" sizes="64px" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Right: Product info */}
@@ -122,7 +140,7 @@ export default function ProductPageClient({ id }: { id: string }) {
                   Call Shop
                 </a>
               )}
-              {product.inStock && shop.isCurrentlyOpen && (
+              {product.inStock && shop.isCurrentlyOpen && canReserve && (
                 <button
                   onClick={() => {
                     if (!user) { toast.error('Login to reserve'); return; }
