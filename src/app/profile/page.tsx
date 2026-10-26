@@ -18,14 +18,14 @@ const STATUS_COLORS: Record<string, string> = {
   COMPLETED: 'text-blue-600 bg-blue-50',
 };
 
-export const AVATARS = [
+const AVATARS = [
   '🦁', '🐯', '🐻', '🐼', '🦊',
   '🐺', '🦝', '🐮', '🐷', '🐸',
   '🐧', '🦅', '🦋', '🐬', '🦄',
   '🐲', '🤖', '👨‍💻', '🧑‍🚀', '🥷',
 ];
 
-export const AVATAR_BG: Record<string, string> = {
+const AVATAR_BG: Record<string, string> = {
   '🦁': '#E8A838', '🐯': '#D4701A', '🐻': '#8B6914', '🐼': '#3D3D3D', '🦊': '#D45E1A',
   '🐺': '#6B7280', '🦝': '#5C5C5C', '🐮': '#5B88C0', '🐷': '#E8829A', '🐸': '#4CAF50',
   '🐧': '#1E3A5F', '🦅': '#7B4F2E', '🦋': '#9C27B0', '🐬': '#0288D1', '🦄': '#E91E63',
@@ -33,11 +33,11 @@ export const AVATAR_BG: Record<string, string> = {
 };
 
 // level 1 = 0 purchases (starter), level N unlocked at (N-1)*3 purchases
-export function avatarLevel(completedCount: number) {
+function avatarLevel(completedCount: number) {
   return Math.min(Math.floor(completedCount / 3) + 1, 20);
 }
 
-export function AvatarDisplay({ value, size = 64 }: { value?: string | null; size?: number }) {
+function AvatarDisplay({ value, size = 64 }: { value?: string | null; size?: number }) {
   if (value?.startsWith('http')) {
     return <img src={value} alt="" className="rounded-2xl object-cover flex-shrink-0" style={{ width: size, height: size }} />;
   }
