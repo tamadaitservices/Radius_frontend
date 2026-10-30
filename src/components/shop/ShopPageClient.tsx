@@ -108,7 +108,7 @@ export default function ShopPageClient({ id }: { id: string }) {
             </a>
             {shop.whatsapp && (
               <a
-                href={`https://wa.me/91${shop.whatsapp}?text=${encodeURIComponent('Hi! I found your shop on RadiuYes. Is the product available?')}`}
+                href={`https://wa.me/91${shop.whatsapp}?text=${encodeURIComponent(`Hi! I found *${shop.name}* on RadiuYes and want to check if a product is available.\nShop: ${typeof window !== 'undefined' ? window.location.href : 'https://radiuyes.com/shop/' + (shop.slug || shop.id)}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 px-5 py-3 rounded-full font-bold text-white flex-1 justify-center min-w-[120px]"

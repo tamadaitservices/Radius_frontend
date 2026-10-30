@@ -51,6 +51,17 @@ export default function ProductPageClient({ id }: { id: string }) {
   const discount = product.mrp && product.mrp > product.price
     ? Math.round((1 - product.price / product.mrp) * 100)
     : null;
+  const whatsappMessage = [
+    'Hi! I found this product on RadiuYes and want to know if it is available:',
+    '',
+    `*${product.name}*`,
+    `Price: ${formatPrice(product.price)}${product.mrp && product.mrp > product.price ? ` (MRP ${formatPrice(product.mrp)}, ${discount}% off)` : ''}`,
+    product.sku ? `SKU: #${product.sku}` : '',
+    product.description ? `Details: ${String(product.description).replace(/\s+/g, ' ').slice(0, 150)}` : '',
+    product.tags?.length > 0 ? `Variants/tags: ${product.tags.join(', ')}` : '',
+    `Shop: ${shop.name}`,
+    `Link: ${typeof window !== 'undefined' ? window.location.origin : 'https://radiuyes.com'}/product/${product.id}`,
+  ].filter(Boolean).join('\n');
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
@@ -160,7 +171,7 @@ export default function ProductPageClient({ id }: { id: string }) {
             <div className="flex gap-2 mt-2">
               {shop.whatsapp && (
                 <a
-                  href={`https://wa.me/91${shop.whatsapp}?text=${encodeURIComponent(`Hi! I found ${product.name} on RadiuYes. Is it available?`)}`}
+                  href={`https://wa.me/91${shop.whatsapp}?text=${encodeURIComponent(whatsappMessage)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-full font-bold text-white text-sm"

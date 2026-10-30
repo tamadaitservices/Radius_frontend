@@ -96,7 +96,7 @@ export default function PlaceDetailPage({ params }: { params: Promise<{ id: stri
             )}
             {place.whatsapp && (
               <a
-                href={`https://wa.me/91${place.whatsapp}?text=${encodeURIComponent(`Hi! I found ${place.name} on RadiuYes.`)}`}
+                href={`https://wa.me/91${place.whatsapp}?text=${encodeURIComponent(`Hi! I found *${place.name}* on RadiuYes.\nLink: ${typeof window !== 'undefined' ? window.location.href : 'https://radiuyes.com/place/' + place.id}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 px-5 py-3 rounded-full font-bold text-white flex-1 justify-center min-w-[120px]"
