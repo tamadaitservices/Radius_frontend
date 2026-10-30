@@ -12,6 +12,7 @@ import {
   PLACE_CATEGORY_ICONS, PLACE_CATEGORY_LABELS,
   FOOD_CATEGORY_ICONS, FOOD_CATEGORY_LABELS,
 } from '@/lib/utils';
+import PromoBanners from '@/components/home/PromoBanners';
 
 interface Props {
   type: 'PLACE' | 'FOOD';
@@ -46,6 +47,7 @@ export default function PlaceBrowse({ type }: Props) {
 
   return (
     <div className="space-y-6">
+      <PromoBanners module={type === 'FOOD' ? 'food' : 'places'} />
       <div>
         <h1 className="text-2xl font-black flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
           <Icon size={22} style={{ color: 'var(--brand-ink)' }} />

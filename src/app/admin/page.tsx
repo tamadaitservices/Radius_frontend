@@ -22,6 +22,8 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
+import { cropImage } from '@/lib/cropImage';
+import { specHint } from '@/lib/imageSpecs';
 
 type Section = 'dashboard' | 'vendors' | 'shops' | 'categories' | 'listings' | 'places' | 'food' | 'banners' | 'users' | 'reservations' | 'zones' | 'products' | 'reviews' | 'settings' | 'notifications';
 
@@ -79,6 +81,13 @@ const NAV_GROUPS = [
   },
 ];
 
+const BANNER_MODULES = [
+  { value: 'shops', label: 'Shops (home)' },
+  { value: 'preowned', label: 'Resale' },
+  { value: 'places', label: 'Places' },
+  { value: 'food', label: 'Food' },
+];
+
 const GRADIENTS = [
   { value: 'from-teal-600 to-emerald-500', label: 'Teal → Emerald' },
   { value: 'from-blue-600 to-cyan-500', label: 'Blue → Cyan' },
@@ -108,7 +117,7 @@ export default function AdminPage() {
   const [featuredDays, setFeaturedDays] = useState<Record<string, string>>({});
   const [bannerForm, setBannerForm] = useState({
     title: '', subtitle: '', ctaText: '', ctaLink: '',
-    gradient: 'from-teal-600 to-emerald-500', sortOrder: '0',
+    gradient: 'from-teal-600 to-emerald-500', sortOrder: '0', module: 'shops',
   });
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [bannerPreviewUrl, setBannerPreviewUrl] = useState<string | null>(null);
@@ -127,7 +136,7 @@ export default function AdminPage() {
 
   // Edit modals state
   const [editingBanner, setEditingBanner] = useState<any>(null);
-  const [editBannerForm, setEditBannerForm] = useState({ title: '', subtitle: '', ctaText: '', ctaLink: '', gradient: '', sortOrder: '0' });
+  const [editBannerForm, setEditBannerForm] = useState({ title: '', subtitle: '', ctaText: '', ctaLink: '', gradient: '', sortOrder: '0', module: 'shops' });
   const [editingVendor, setEditingVendor] = useState<any>(null);
   const [editVendorForm, setEditVendorForm] = useState({ name: '', shopName: '', plan: 'FREE' });
   const [editingShop, setEditingShop] = useState<any>(null);
@@ -424,7 +433,7 @@ export default function AdminPage() {
 
   const openEditBanner = (b: any) => {
     setEditingBanner(b);
-    setEditBannerForm({ title: b.title, subtitle: b.subtitle ?? '', ctaText: b.ctaText, ctaLink: b.ctaLink, gradient: b.gradient, sortOrder: String(b.sortOrder) });
+    setEditBannerForm({ title: b.title, subtitle: b.subtitle ?? '', ctaText: b.ctaText, ctaLink: b.ctaLink, gradient: b.gradient, sortOrder: String(b.sortOrder), module: b.module ?? 'shops' });
   };
 
   const openEditVendor = (v: any) => {
@@ -471,7 +480,7 @@ export default function AdminPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-banners'] });
       qc.invalidateQueries({ queryKey: ['promo-banners'] });
-      setBannerForm({ title: '', subtitle: '', ctaText: '', ctaLink: '', gradient: 'from-teal-600 to-emerald-500', sortOrder: '0' });
+      setBannerForm({ title: '', subtitle: '', ctaText: '', ctaLink: '', gradient: 'from-teal-600 to-emerald-500', sortOrder: '0', module: 'shops' });
       setBannerFile(null);
       setBannerPreviewUrl(null);
       if (newBannerFileRef.current) newBannerFileRef.current.value = '';
@@ -1077,7 +1086,7 @@ export default function AdminPage() {
                             ref={(el) => { shopImageRefs.current[s.id] = el; }}
                             onChange={(e) => {
                               const file = e.target.files?.[0];
-                              if (file) uploadShopImage.mutate({ id: s.id, file });
+                              if (file) cropImage(file, 'cover').then((c) => c && uploadShopImage.mutate({ id: s.id, file: c }));
                               e.target.value = '';
                             }}
                           />
@@ -1244,6 +1253,7 @@ export default function AdminPage() {
                         <p className="text-xs">PNG, JPG, JPEG · Max 5MB · Required: 800×400px</p>
                       </div>
                     )}
+                    <p className="text-xs text-gray-400 mb-1">{specHint('banner')}</p>
                     <input
                       ref={newBannerFileRef}
                       type="file"
@@ -1251,10 +1261,13 @@ export default function AdminPage() {
                       className="sr-only"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
+                        e.target.value = '';
                         if (!file) return;
-                        setBannerFile(file);
-                        const url = URL.createObjectURL(file);
-                        setBannerPreviewUrl(url);
+                        cropImage(file, 'banner').then((c) => {
+                          if (!c) return;
+                          setBannerFile(c);
+                          setBannerPreviewUrl(URL.createObjectURL(c));
+                        });
                       }}
                     />
                   </label>
@@ -1291,6 +1304,18 @@ export default function AdminPage() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="sm:col-span-2">
+                    <label className="text-xs text-gray-500 font-semibold block mb-1.5">Show in module *</label>
+                    <select
+                      value={bannerForm.module}
+                      onChange={(e) => setBannerForm((f) => ({ ...f, module: e.target.value }))}
+                      className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:border-green-600 focus:outline-none text-gray-800"
+                    >
+                      {BANNER_MODULES.map((m) => (
+                        <option key={m.value} value={m.value}>{m.label}</option>
+                      ))}
+                    </select>
+                  </div>
                   <input
                     value={bannerForm.title}
                     onChange={(e) => setBannerForm((f) => ({ ...f, title: e.target.value }))}
@@ -1387,6 +1412,9 @@ export default function AdminPage() {
                               <p className="font-bold text-gray-900 text-sm">{b.title}</p>
                               {b.subtitle && <p className="text-xs text-gray-500">{b.subtitle}</p>}
                               <p className="text-xs text-gray-400 mt-0.5">→ {b.ctaLink} · order #{b.sortOrder}</p>
+                              <span className="mt-1 mr-1 inline-block text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                                {BANNER_MODULES.find((m) => m.value === (b.module ?? 'shops'))?.label ?? 'Shops'}
+                              </span>
                               <span className={`mt-1 inline-block text-xs font-bold px-2 py-0.5 rounded-full ${b.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
                                 {b.isActive ? 'Active' : 'Inactive'}
                               </span>
@@ -1402,7 +1430,7 @@ export default function AdminPage() {
                                   ref={(el) => { bannerImageRefs.current[b.id] = el; }}
                                   onChange={(e) => {
                                     const file = e.target.files?.[0];
-                                    if (file) uploadBannerImage.mutate({ id: b.id, file });
+                                    if (file) cropImage(file, 'banner').then((c) => c && uploadBannerImage.mutate({ id: b.id, file: c }));
                                     e.target.value = '';
                                   }}
                                 />
@@ -1760,7 +1788,7 @@ export default function AdminPage() {
                               ref={(el) => { productImageRefs.current[p.id] = el; }}
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
-                                if (file) uploadProductImage.mutate({ id: p.id, file });
+                                if (file) cropImage(file, 'product').then((c) => c && uploadProductImage.mutate({ id: p.id, file: c }));
                                 e.target.value = '';
                               }}
                             />
@@ -1854,11 +1882,17 @@ export default function AdminPage() {
                       accept="image/*"
                       onChange={(e) => {
                         const f = e.target.files?.[0] ?? null;
-                        setNotifFile(f);
-                        setNotifPreview(f ? URL.createObjectURL(f) : null);
+                        e.target.value = '';
+                        if (!f) { setNotifFile(null); setNotifPreview(null); return; }
+                        cropImage(f, 'notification').then((c) => {
+                          if (!c) return;
+                          setNotifFile(c);
+                          setNotifPreview(URL.createObjectURL(c));
+                        });
                       }}
                       className="block w-full text-sm text-gray-600 dark:text-gray-300 file:mr-3 file:px-3 file:py-2 file:rounded-lg file:border-0 file:bg-green-50 file:text-green-700 file:font-semibold"
                     />
+                    <p className="text-xs text-gray-400 mt-1.5">{specHint('notification')}</p>
                     {notifPreview && (
                       <div className="mt-2 relative inline-block">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -2337,6 +2371,12 @@ export default function AdminPage() {
       <AdminModal title={`Edit Banner — ${editingBanner.title}`} onClose={() => setEditingBanner(null)}>
         <div className="space-y-3">
           <div>
+            <label className="text-xs font-semibold text-gray-500 block mb-1">Show in module *</label>
+            <select value={editBannerForm.module} onChange={(e) => setEditBannerForm(f => ({ ...f, module: e.target.value }))} className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:border-green-600 focus:outline-none text-gray-800">
+              {BANNER_MODULES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+            </select>
+          </div>
+          <div>
             <label className="text-xs font-semibold text-gray-500 block mb-1">Title *</label>
             <input value={editBannerForm.title} onChange={(e) => setEditBannerForm(f => ({ ...f, title: e.target.value }))} className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:border-green-600 focus:outline-none text-gray-800" />
           </div>
@@ -2390,12 +2430,17 @@ export default function AdminPage() {
                   <p className="text-xs font-medium">Click to upload new image</p>
                 </div>
               )}
+              <p className="text-xs text-gray-400 mt-1.5">{specHint('banner')}</p>
               <input ref={editBannerFileRef} type="file" accept="image/png,image/jpeg,image/jpg,image/webp" className="sr-only"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
+                  e.target.value = '';
                   if (!file) return;
-                  setEditBannerFile(file);
-                  setEditBannerPreviewUrl(URL.createObjectURL(file));
+                  cropImage(file, 'banner').then((c) => {
+                    if (!c) return;
+                    setEditBannerFile(c);
+                    setEditBannerPreviewUrl(URL.createObjectURL(c));
+                  });
                 }}
               />
             </label>
@@ -2541,12 +2586,13 @@ export default function AdminPage() {
                     </button>
                   )}
                 </div>
+                <p className="text-xs text-gray-400 mt-1.5">{specHint('product')}</p>
                 <input
                   ref={newProductPhotoRef}
                   type="file" accept="image/*" className="sr-only"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
-                    if (file) uploadNewProductPhoto.mutate(file);
+                    if (file) cropImage(file, 'product').then((c) => c && uploadNewProductPhoto.mutate(c));
                     e.target.value = '';
                   }}
                 />
@@ -2590,12 +2636,13 @@ export default function AdminPage() {
                 {uploadShopImage.isPending ? <Loader2 size={13} className="animate-spin" /> : <ImagePlus size={13} />}
                 {editingShop.coverImage ? 'Replace' : 'Upload'}
               </button>
+              <p className="text-xs text-gray-400 mt-1.5">{specHint('cover')}</p>
               <input
                 ref={editShopImageRef}
                 type="file" accept="image/*" className="sr-only"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file) uploadShopImage.mutate({ id: editingShop.id, file });
+                  if (file) cropImage(file, 'cover').then((c) => c && uploadShopImage.mutate({ id: editingShop.id, file: c }));
                   e.target.value = '';
                 }}
               />

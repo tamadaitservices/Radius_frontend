@@ -8,6 +8,8 @@ import toast from 'react-hot-toast';
 import { MapPin, Loader2, ImagePlus } from 'lucide-react';
 import api from '@/lib/api';
 import { useCategories } from '@/hooks/useCategories';
+import { cropImage } from '@/lib/cropImage';
+import { specHint } from '@/lib/imageSpecs';
 
 const AREAS = [
   'Governorpet', 'Suryaraopet', 'Benz Circle', 'Auto Nagar', 'Moghalrajpuram',
@@ -132,11 +134,12 @@ export default function NewShopPage() {
               className="sr-only"
               onChange={(e) => {
                 const f = e.target.files?.[0];
-                if (f) { setImageFile(f); setImagePreview(URL.createObjectURL(f)); }
+                if (f) cropImage(f, 'cover').then((c) => { if (c) { setImageFile(c); setImagePreview(URL.createObjectURL(c)); } });
                 e.target.value = '';
               }}
             />
           </label>
+          <p className="text-xs text-gray-400 mt-1.5">{specHint('cover')}</p>
         </div>
 
         {/* Category */}

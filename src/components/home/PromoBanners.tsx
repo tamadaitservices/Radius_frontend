@@ -55,7 +55,9 @@ const FALLBACK_BANNERS: Banner[] = [
   },
 ];
 
-export default function PromoBanners() {
+export type BannerModule = 'shops' | 'preowned' | 'places' | 'food';
+
+export default function PromoBanners({ module = 'shops' }: { module?: BannerModule }) {
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -86,16 +88,18 @@ export default function PromoBanners() {
   }, []);
 
   const { data: banners } = useQuery({
-    queryKey: ['promo-banners', coords?.lat, coords?.lng],
+    queryKey: ['promo-banners', module, coords?.lat, coords?.lng],
     queryFn: async () => {
-      const params = coords ? `?lat=${coords.lat}&lng=${coords.lng}` : '';
-      const res = await api.get(`/api/banners${params}`);
+      const params = new URLSearchParams({ module });
+      if (coords) { params.set('lat', String(coords.lat)); params.set('lng', String(coords.lng)); }
+      const res = await api.get(`/api/banners?${params}`);
       return res.data as Banner[];
     },
     staleTime: 5 * 60 * 1000,
   });
 
-  const items = banners && banners.length > 0 ? banners : FALLBACK_BANNERS;
+  // Only the shops home has built-in fallback slides; other modules show nothing until admin adds banners.
+  const items = banners && banners.length > 0 ? banners : module === 'shops' ? FALLBACK_BANNERS : [];
   const count = items.length;
   const maxIndex = Math.max(0, count - visibleCount);
 
@@ -129,6 +133,8 @@ export default function PromoBanners() {
   // translateX % is relative to the track element (same width as container)
   // moving by 1 slide = 100% / visibleCount of container
   const translatePct = current * (100 / visibleCount);
+
+  if (count === 0) return null;
 
   return (
     <section>

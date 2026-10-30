@@ -10,6 +10,8 @@ import api from '@/lib/api';
 import { formatPrice } from '@/lib/utils';
 import { useVendorGuard } from '@/hooks/useVendorGuard';
 import { useCategories } from '@/hooks/useCategories';
+import { cropImage } from '@/lib/cropImage';
+import { specHint } from '@/lib/imageSpecs';
 
 interface Product {
   id: string;
@@ -89,12 +91,13 @@ function ProductPhotoGallery({ productId, images, onChange }: { productId: strin
           </button>
         )}
       </div>
+      <p className="text-xs text-gray-400 mt-1.5">{specHint('product')}</p>
       <input
         ref={fileRef}
         type="file" accept="image/*" className="sr-only"
         onChange={(e) => {
           const file = e.target.files?.[0];
-          if (file) upload.mutate(file);
+          if (file) cropImage(file, 'product').then((f) => f && upload.mutate(f));
           e.target.value = '';
         }}
       />
@@ -405,7 +408,7 @@ function ProductsContent() {
                     className="sr-only"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
-                      if (file) uploadImage.mutate({ id: p.id, file });
+                      if (file) cropImage(file, 'product').then((f) => f && uploadImage.mutate({ id: p.id, file: f }));
                       e.target.value = '';
                     }}
                   />

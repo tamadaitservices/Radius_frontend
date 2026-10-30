@@ -14,6 +14,8 @@ import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useCategories } from '@/hooks/useCategories';
+import { cropImage } from '@/lib/cropImage';
+import { specHint } from '@/lib/imageSpecs';
 
 type Section = 'dashboard' | 'shop' | 'products' | 'reservations' | 'reviews' | 'profile';
 
@@ -552,8 +554,9 @@ export default function VendorDashboard() {
                             <label className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-bold cursor-pointer w-fit">
                               <ImagePlus size={16} /> {shop.coverImage ? 'Replace Image' : 'Upload Image'}
                               <input type="file" accept="image/*" className="sr-only" ref={shopImageRef}
-                                onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadShopImage.mutate(f); e.target.value = ''; }} />
+                                onChange={(e) => { const f = e.target.files?.[0]; if (f) cropImage(f, 'cover').then((c) => c && uploadShopImage.mutate(c)); e.target.value = ''; }} />
                             </label>
+                            <p className="text-xs text-gray-400 mt-1.5">{specHint('cover')}</p>
                             {uploadShopImage.isPending && <p className="text-xs text-gray-500 mt-2">Uploading...</p>}
                           </div>
 
@@ -701,8 +704,9 @@ export default function VendorDashboard() {
                           : <div className="flex flex-col items-center gap-1 py-3 text-gray-400"><ImagePlus size={22} /><p className="text-xs font-medium">Click to upload</p></div>
                         }
                         <input type="file" accept="image/*" className="sr-only" ref={newProductImageRef}
-                          onChange={e => { const f = e.target.files?.[0]; if (!f) return; setNewProductImageFile(f); setNewProductImagePreview(URL.createObjectURL(f)); }} />
+                          onChange={e => { const f = e.target.files?.[0]; if (!f) return; cropImage(f, 'product').then((c) => { if (c) { setNewProductImageFile(c); setNewProductImagePreview(URL.createObjectURL(c)); } }); }} />
                       </label>
+                      <p className="text-xs text-gray-400 mt-1.5">{specHint('product')}</p>
                     </div>
                   )}
 
@@ -799,7 +803,7 @@ export default function VendorDashboard() {
                                 <ImagePlus size={16} />
                                 <input type="file" accept="image/*" className="sr-only"
                                   ref={el => { productImageRef.current[p.id] = el; }}
-                                  onChange={e => { const f = e.target.files?.[0]; if (f) uploadProductImage.mutate({ id: p.id, file: f }); e.target.value = ''; }} />
+                                  onChange={e => { const f = e.target.files?.[0]; if (f) cropImage(f, 'product').then((c) => c && uploadProductImage.mutate({ id: p.id, file: c })); e.target.value = ''; }} />
                               </label>
                               {/* Edit */}
                               <button onClick={() => openEditProduct(p)} className="p-2 hover:bg-blue-50 rounded-lg text-blue-500"><Pencil size={15} /></button>

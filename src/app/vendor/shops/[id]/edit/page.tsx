@@ -10,6 +10,8 @@ import Image from 'next/image';
 import api from '@/lib/api';
 import { useVendorGuard } from '@/hooks/useVendorGuard';
 import { useCategories } from '@/hooks/useCategories';
+import { cropImage } from '@/lib/cropImage';
+import { specHint } from '@/lib/imageSpecs';
 
 const AREAS = [
   'Governorpet', 'Suryaraopet', 'Benz Circle', 'Auto Nagar', 'Moghalrajpuram',
@@ -143,8 +145,9 @@ export default function EditShopPage() {
                 <Loader2 size={24} className="animate-spin text-green-600" />
               </div>
             )}
-            <input type="file" accept="image/*" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCover.mutate(f); e.target.value = ''; }} />
+            <input type="file" accept="image/*" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) cropImage(f, 'cover').then((c) => c && uploadCover.mutate(c)); e.target.value = ''; }} />
           </label>
+          <p className="text-xs text-gray-400 mt-1.5">{specHint('cover')}</p>
         </div>
 
         <div>

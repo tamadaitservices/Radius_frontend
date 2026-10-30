@@ -11,6 +11,7 @@ import { useLocation } from '@/hooks/useLocation';
 import { useAuthStore } from '@/store/auth';
 import { useRadiusStore } from '@/store/radius';
 import { LISTING_CATEGORY_ICONS, LISTING_CATEGORY_LABELS } from '@/lib/utils';
+import PromoBanners from '@/components/home/PromoBanners';
 
 const CATEGORIES = Object.keys(LISTING_CATEGORY_LABELS);
 
@@ -34,6 +35,7 @@ export default function PreOwnedBrowse() {
 
   return (
     <div className="space-y-6">
+      <PromoBanners module="preowned" />
       {/* Header + Post CTA */}
       <div className="flex items-center justify-between">
         <div>
