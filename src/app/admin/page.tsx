@@ -254,6 +254,9 @@ export default function AdminPage() {
 
   // Notifications
   const [notifForm, setNotifForm] = useState({ title: '', body: '', target: 'all' });
+  const [notifFile, setNotifFile] = useState<File | null>(null);
+  const [notifPreview, setNotifPreview] = useState<string | null>(null);
+  const notifFileRef = useRef<HTMLInputElement>(null);
   const [notifResult, setNotifResult] = useState<{ sentCount: number; failCount: number; totalTokens: number } | null>(null);
 
   const { data: notifLogs, isLoading: notifLoading } = useQuery({
@@ -265,11 +268,23 @@ export default function AdminPage() {
 
   const sendNotification = useMutation({
     mutationFn: async () => {
+      if (notifFile) {
+        const fd = new FormData();
+        fd.append('title', notifForm.title);
+        fd.append('body', notifForm.body);
+        fd.append('target', notifForm.target);
+        fd.append('image', notifFile);
+        const r = await api.post('/api/admin/notifications/send', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+        return r.data;
+      }
       const r = await api.post('/api/admin/notifications/send', notifForm);
       return r.data;
     },
     onSuccess: (data) => {
       setNotifResult(data);
+      setNotifFile(null);
+      setNotifPreview(null);
+      if (notifFileRef.current) notifFileRef.current.value = '';
       qc.invalidateQueries({ queryKey: ['admin-notifications'] });
       toast.success(`Sent to ${data.sentCount} device${data.sentCount !== 1 ? 's' : ''}!`);
     },
@@ -1830,6 +1845,31 @@ export default function AdminPage() {
                       rows={3}
                       className="w-full px-3 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:border-green-600 focus:outline-none text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-800 resize-none"
                     />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 block mb-1">Image (optional)</label>
+                    <input
+                      ref={notifFileRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0] ?? null;
+                        setNotifFile(f);
+                        setNotifPreview(f ? URL.createObjectURL(f) : null);
+                      }}
+                      className="block w-full text-sm text-gray-600 dark:text-gray-300 file:mr-3 file:px-3 file:py-2 file:rounded-lg file:border-0 file:bg-green-50 file:text-green-700 file:font-semibold"
+                    />
+                    {notifPreview && (
+                      <div className="mt-2 relative inline-block">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={notifPreview} alt="Notification preview" className="h-28 rounded-xl border border-gray-200 dark:border-gray-600 object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => { setNotifFile(null); setNotifPreview(null); if (notifFileRef.current) notifFileRef.current.value = ''; }}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs leading-5"
+                        >×</button>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 block mb-2">Send To</label>
