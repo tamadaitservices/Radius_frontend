@@ -49,28 +49,28 @@ function EditForm({ listing, onDone }: { listing: Listing; onDone: () => void })
   return (
     <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200 space-y-3">
       <h3 className="font-bold text-gray-900">Edit Listing</h3>
-      <input value={form.title} onChange={set('title')} placeholder="Title" className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl text-sm focus:border-orange-500 focus:outline-none" />
-      <textarea value={form.description} onChange={set('description')} placeholder="Description" rows={2} className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl text-sm focus:border-orange-500 focus:outline-none resize-none" />
+      <input value={form.title} onChange={set('title')} placeholder="Title" className="w-full px-3 py-2 border-2 border-gray-200 rounded-2xl text-sm focus:border-[var(--brand)] focus:outline-none" />
+      <textarea value={form.description} onChange={set('description')} placeholder="Description" rows={2} className="w-full px-3 py-2 border-2 border-gray-200 rounded-2xl text-sm focus:border-[var(--brand)] focus:outline-none resize-none" />
       <div className="grid grid-cols-2 gap-2">
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
-          <input type="number" value={form.price} onChange={set('price')} placeholder="Price" className="w-full pl-7 pr-3 py-2 border-2 border-gray-200 rounded-xl text-sm focus:border-orange-500 focus:outline-none" />
+          <input type="number" value={form.price} onChange={set('price')} placeholder="Price" className="w-full pl-7 pr-3 py-2 border-2 border-gray-200 rounded-2xl text-sm focus:border-[var(--brand)] focus:outline-none" />
         </div>
-        <input value={form.area} onChange={set('area')} placeholder="Area" className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl text-sm focus:border-orange-500 focus:outline-none" />
+        <input value={form.area} onChange={set('area')} placeholder="Area" className="w-full px-3 py-2 border-2 border-gray-200 rounded-2xl text-sm focus:border-[var(--brand)] focus:outline-none" />
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <select value={form.category} onChange={set('category')} className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl text-sm focus:border-orange-500 focus:outline-none">
+        <select value={form.category} onChange={set('category')} className="w-full px-3 py-2 border-2 border-gray-200 rounded-2xl text-sm focus:border-[var(--brand)] focus:outline-none">
           {CATEGORIES.map((c) => <option key={c} value={c}>{LISTING_CATEGORY_LABELS[c]}</option>)}
         </select>
-        <select value={form.condition} onChange={set('condition')} className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl text-sm focus:border-orange-500 focus:outline-none">
+        <select value={form.condition} onChange={set('condition')} className="w-full px-3 py-2 border-2 border-gray-200 rounded-2xl text-sm focus:border-[var(--brand)] focus:outline-none">
           {CONDITIONS.map((c) => <option key={c} value={c}>{LISTING_CONDITION_LABELS[c]}</option>)}
         </select>
       </div>
       <div className="flex gap-2">
-        <button onClick={() => save.mutate()} disabled={save.isPending} className="flex-1 py-2 rounded-xl text-white font-bold text-sm disabled:opacity-50" style={{ backgroundColor: 'var(--ry-orange)' }}>
+        <button onClick={() => save.mutate()} disabled={save.isPending} className="flex-1 py-2 rounded-full text-white font-bold text-sm disabled:opacity-50" style={{ backgroundColor: 'var(--brand)' }}>
           {save.isPending ? 'Saving...' : 'Save Changes'}
         </button>
-        <button onClick={onDone} className="px-4 py-2 rounded-xl border-2 border-gray-200 text-sm font-semibold text-gray-600">Cancel</button>
+        <button onClick={onDone} className="px-4 py-2 rounded-2xl border-2 border-gray-200 text-sm font-semibold text-gray-600">Cancel</button>
       </div>
     </div>
   );
@@ -94,14 +94,14 @@ function IncomingContactRequests() {
     onError: (err: any) => toast.error(err.response?.data?.error || 'Failed.'),
   });
 
-  if (isLoading) return <div className="flex justify-center py-8"><Loader2 className="animate-spin text-orange-500" size={24} /></div>;
+  if (isLoading) return <div className="flex justify-center py-8"><Loader2 className="animate-spin text-[var(--brand)]" size={24} /></div>;
   if (!data?.length) return null;
 
   return (
     <div className="space-y-3 mb-6">
       <h2 className="font-bold text-gray-900 text-sm">Contact Requests</h2>
       {data.map((r: any) => (
-        <div key={r.id} className="bg-white rounded-2xl border border-gray-100 p-4">
+        <div key={r.id} className="ry-card p-4">
           <div className="flex items-center gap-3">
             <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
               {r.listing.images?.[0] && <Image src={r.listing.images[0]} alt="" fill className="object-cover" sizes="48px" />}
@@ -120,7 +120,7 @@ function IncomingContactRequests() {
 
           {r.status === 'PENDING' && (
             <div className="flex gap-2 mt-3">
-              <button onClick={() => respond.mutate({ id: r.id, status: 'APPROVED' })} className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg bg-green-600 text-white text-xs font-bold">
+              <button onClick={() => respond.mutate({ id: r.id, status: 'APPROVED' })} className="flex-1 flex items-center justify-center gap-1 py-2 rounded-full bg-green-600 text-white text-xs font-bold">
                 <Check size={13} /> Approve
               </button>
               <button onClick={() => respond.mutate({ id: r.id, status: 'REJECTED' })} className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg bg-gray-100 text-gray-600 text-xs font-bold">
@@ -180,19 +180,19 @@ export default function MyListingsPage() {
     <div className="max-w-3xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-black text-gray-900">My Listings</h1>
-        <a href="/sell/my-requests" className="text-sm font-semibold" style={{ color: 'var(--ry-orange)' }}>My Requests →</a>
+        <a href="/sell/my-requests" className="text-sm font-semibold" style={{ color: 'var(--brand)' }}>My Requests →</a>
       </div>
 
       <IncomingContactRequests />
 
-      {isLoading && <div className="flex justify-center py-12"><Loader2 className="animate-spin text-orange-500" size={32} /></div>}
+      {isLoading && <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[var(--brand)]" size={32} /></div>}
 
       {!isLoading && !listings?.length && (
-        <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
+        <div className="text-center py-16 ry-card">
           <div className="text-4xl mb-3">📦</div>
           <p className="font-bold text-gray-900 mb-1">No listings yet</p>
           <p className="text-sm text-gray-500 mb-4">Post something you'd like to sell.</p>
-          <a href="/sell/new" className="inline-block px-6 py-2 rounded-xl text-white font-semibold text-sm" style={{ backgroundColor: 'var(--ry-orange)' }}>
+          <a href="/sell/new" className="inline-block px-6 py-2 rounded-full text-white font-semibold text-sm" style={{ backgroundColor: 'var(--brand)' }}>
             Post a Listing
           </a>
         </div>
@@ -204,7 +204,7 @@ export default function MyListingsPage() {
             {editing?.id === l.id ? (
               <EditForm listing={l} onDone={() => setEditing(null)} />
             ) : (
-              <div className="bg-white rounded-2xl border border-gray-100 p-4 flex gap-3 items-start">
+              <div className="ry-card p-4 flex gap-3 items-start">
                 <label className="relative w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 cursor-pointer group">
                   {l.images?.[0] ? (
                     <Image src={l.images[0]} alt={l.title} fill className="object-cover" sizes="64px" />

@@ -12,6 +12,7 @@ import {
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { formatPrice } from '@/lib/utils';
+import GlassCard from '@/components/ui/GlassCard';
 import { useCategories } from '@/hooks/useCategories';
 import { useAuthStore } from '@/store/auth';
 import ReservationModal from '@/components/shop/ReservationModal';
@@ -35,7 +36,7 @@ export default function ProductPageClient({ id }: { id: string }) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="animate-spin text-green-600" size={40} />
+        <Loader2 className="animate-spin text-[var(--brand)]" size={40} />
       </div>
     );
   }
@@ -56,15 +57,16 @@ export default function ProductPageClient({ id }: { id: string }) {
       {/* Back */}
       <button
         onClick={() => router.back()}
-        className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-800 mb-4"
+        className="flex items-center gap-1.5 text-sm font-semibold mb-4 hover:opacity-80 transition-opacity"
+        style={{ color: 'var(--text-muted)' }}
       >
         <ArrowLeft size={16} /> Back
       </button>
 
       <div className="grid md:grid-cols-2 gap-4">
         {/* Left: Product image */}
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-          <div className="relative aspect-square bg-gray-50">
+        <div>
+          <div className="relative aspect-square rounded-[32px] overflow-hidden" style={{ background: 'var(--tint-1)', boxShadow: 'var(--shadow-lift)' }}>
             {activeImage ? (
               <Image src={activeImage} alt={product.name} fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" priority />
             ) : (
@@ -74,25 +76,25 @@ export default function ProductPageClient({ id }: { id: string }) {
             )}
             {!product.inStock && (
               <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
-                <span className="text-lg font-black text-red-600 bg-red-50 px-4 py-2 rounded-xl">Out of Stock</span>
+                <span className="text-lg font-black text-red-600 bg-red-50 px-5 py-2 rounded-full">Out of Stock</span>
               </div>
             )}
             {discount && (
               <span
-                className="absolute top-3 right-3 text-xs font-black px-3 py-1.5 rounded-lg text-white"
-                style={{ backgroundColor: 'var(--ry-orange)' }}
+                className="absolute top-4 right-4 text-xs font-black px-3.5 py-1.5 rounded-full"
+                style={{ backgroundColor: 'var(--brand)', color: 'var(--on-brand)' }}
               >
                 {discount}% OFF
               </span>
             )}
           </div>
           {images.length > 1 && (
-            <div className="flex gap-2 p-3 overflow-x-auto">
+            <div className="flex gap-2.5 pt-4 overflow-x-auto">
               {images.map((url, i) => (
                 <button
                   key={url}
                   onClick={() => setActiveImageIndex(i)}
-                  className={`relative flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-colors ${i === activeImageIndex ? 'border-green-600' : 'border-gray-100'}`}
+                  className={`relative flex-shrink-0 w-16 h-16 rounded-2xl overflow-hidden border-2 transition-colors ${i === activeImageIndex ? 'border-[var(--brand)]' : 'border-transparent'}`}
                 >
                   <Image src={url} alt={`${product.name} ${i + 1}`} fill className="object-cover" sizes="64px" />
                 </button>
@@ -102,28 +104,28 @@ export default function ProductPageClient({ id }: { id: string }) {
         </div>
 
         {/* Right: Product info */}
-        <div className="flex flex-col gap-4">
-          <div className="bg-white rounded-2xl border border-gray-100 p-5">
-            <h1 className="text-2xl font-black text-gray-900 leading-tight">{product.name}</h1>
+        <div className="flex flex-col gap-5">
+          <div className="px-1">
+            <h1 className="text-3xl font-black leading-tight" style={{ color: 'var(--foreground)' }}>{product.name}</h1>
             {product.sku && (
-              <p className="text-xs font-mono text-gray-400 mt-1">SKU: #{product.sku}</p>
+              <p className="text-xs font-mono mt-1" style={{ color: 'var(--text-subtle)' }}>SKU: #{product.sku}</p>
             )}
 
             <div className="flex items-center gap-3 mt-4">
-              <span className="text-3xl font-black text-gray-900">{formatPrice(product.price)}</span>
+              <span className="text-4xl font-black" style={{ color: 'var(--foreground)' }}>{formatPrice(product.price)}</span>
               {product.mrp && product.mrp > product.price && (
-                <span className="text-lg text-gray-400 line-through">{formatPrice(product.mrp)}</span>
+                <span className="text-lg line-through" style={{ color: 'var(--text-subtle)' }}>{formatPrice(product.mrp)}</span>
               )}
             </div>
 
             {product.description && (
-              <p className="text-sm text-gray-600 mt-3 leading-relaxed">{product.description}</p>
+              <p className="text-sm mt-3 leading-relaxed" style={{ color: 'var(--text-muted)' }}>{product.description}</p>
             )}
 
             {product.tags?.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-3">
                 {product.tags.map((tag: string) => (
-                  <span key={tag} className="text-xs px-2.5 py-1 bg-gray-100 text-gray-600 rounded-full">{tag}</span>
+                  <span key={tag} className="text-xs px-3 py-1.5 rounded-full" style={{ background: 'var(--surface-2)', color: 'var(--text-muted)' }}>{tag}</span>
                 ))}
               </div>
             )}
@@ -133,8 +135,8 @@ export default function ProductPageClient({ id }: { id: string }) {
               {shop.phone && (
                 <a
                   href={`tel:${shop.phone}`}
-                  className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold border-2 text-base"
-                  style={{ borderColor: 'var(--ry-green)', color: 'var(--ry-green)' }}
+                  className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-full font-bold text-base transition hover:brightness-95"
+                  style={{ background: 'var(--brand-light)', color: 'var(--brand-ink)' }}
                 >
                   <Phone size={18} />
                   Call Shop
@@ -146,8 +148,7 @@ export default function ProductPageClient({ id }: { id: string }) {
                     if (!user) { toast.error('Login to reserve'); return; }
                     setReserving(true);
                   }}
-                  className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-white text-base"
-                  style={{ backgroundColor: 'var(--ry-orange)' }}
+                  className="ry-pill-btn flex-1 !py-3.5 text-base"
                 >
                   <ShoppingBag size={18} />
                   Reserve 45 min
@@ -162,7 +163,7 @@ export default function ProductPageClient({ id }: { id: string }) {
                   href={`https://wa.me/91${shop.whatsapp}?text=${encodeURIComponent(`Hi! I found ${product.name} on RadiuYes. Is it available?`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-white text-sm"
+                  className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-full font-bold text-white text-sm"
                   style={{ backgroundColor: '#25D366' }}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
@@ -174,8 +175,7 @@ export default function ProductPageClient({ id }: { id: string }) {
                   href={`https://www.google.com/maps/dir/?api=1&destination=${shop.latitude},${shop.longitude}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold border text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                  style={{ borderColor: 'var(--ry-border)' }}
+                  className="ry-pill-ghost flex-1 !py-3.5 text-sm"
                 >
                   <Navigation size={15} />
                   Directions
@@ -185,38 +185,38 @@ export default function ProductPageClient({ id }: { id: string }) {
           </div>
 
           {/* Shop info */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-5">
-            <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-3">Shop</h2>
+          <div className="px-1 pt-5 border-t" style={{ borderColor: 'var(--border)' }}>
+            <h2 className="text-sm font-bold uppercase tracking-wide mb-3" style={{ color: 'var(--text-muted)' }}>Shop</h2>
             <Link href={`/shop/${shop.slug || shop.id}`} className="flex items-start gap-3 group">
-              <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-2xl flex-shrink-0">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl flex-shrink-0" style={{ background: 'var(--tint-1)' }}>
                 {ICONS[shop.category] || '🏪'}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-black text-gray-900 group-hover:text-green-700 transition-colors">{shop.name}</p>
-                <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
+                <p className="font-black group-hover:text-[var(--brand-ink)] transition-colors" style={{ color: 'var(--foreground)' }}>{shop.name}</p>
+                <div className="flex items-center gap-1 text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
                   <MapPin size={11} />
                   <span>{shop.area}, {shop.city}</span>
                 </div>
                 {shop.rating > 0 && (
-                  <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
-                    <Star size={11} className="fill-yellow-400 text-yellow-400" />
+                  <div className="flex items-center gap-1 text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                    <Star size={11} style={{ color: 'var(--star)', fill: 'var(--star)' }} />
                     <span>{shop.rating.toFixed(1)} ({shop.reviewCount} reviews)</span>
                   </div>
                 )}
               </div>
-              <span className={`flex-shrink-0 text-xs font-bold px-2.5 py-1 rounded-lg ${shop.isCurrentlyOpen ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+              <span className={`flex-shrink-0 text-xs font-bold px-3 py-1.5 rounded-full ${shop.isCurrentlyOpen ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                 {shop.isCurrentlyOpen ? '● Open' : '● Closed'}
               </span>
             </Link>
 
-            <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-3 pt-3 border-t border-gray-50">
+            <div className="flex items-center gap-1.5 text-xs mt-3" style={{ color: 'var(--text-muted)' }}>
               <Clock size={12} />
               <span>{shop.openingTime} – {shop.closingTime}</span>
             </div>
 
             <Link
               href={`/shop/${shop.slug || shop.id}`}
-              className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+              className="ry-pill-ghost mt-3 w-full !py-3 text-sm"
             >
               <Store size={14} />
               View Full Shop
@@ -228,33 +228,19 @@ export default function ProductPageClient({ id }: { id: string }) {
       {/* Other products */}
       {otherProducts.length > 0 && (
         <div className="mt-6">
-          <h2 className="text-lg font-black text-gray-900 mb-3">More from {shop.name}</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {otherProducts.map((p: any) => (
-              <Link
+          <h2 className="text-xl font-extrabold mb-4" style={{ color: 'var(--foreground)' }}>More from {shop.name}</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {otherProducts.map((p: any, i: number) => (
+              <GlassCard
                 key={p.id}
                 href={`/product/${p.id}`}
-                className="bg-white border border-gray-100 rounded-xl overflow-hidden hover:border-green-200 hover:shadow-sm transition-all"
-              >
-                <div className="relative h-28 bg-gray-50">
-                  {p.image ? (
-                    <Image src={p.image} alt={p.name} fill className="object-cover" sizes="200px" />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-3xl">
-                      {ICONS[p.category] || '🛍️'}
-                    </div>
-                  )}
-                  {!p.inStock && (
-                    <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
-                      <span className="text-xs font-bold text-red-500">Out of Stock</span>
-                    </div>
-                  )}
-                </div>
-                <div className="p-2.5">
-                  <p className="text-sm font-semibold text-gray-900 leading-tight line-clamp-2">{p.name}</p>
-                  <p className="text-sm font-black text-gray-900 mt-1">{formatPrice(p.price)}</p>
-                </div>
-              </Link>
+                image={p.image}
+                fallbackEmoji={ICONS[p.category] || '🛍️'}
+                title={p.name}
+                price={formatPrice(p.price)}
+                tint={i + 1}
+                muted={!p.inStock}
+              />
             ))}
           </div>
         </div>

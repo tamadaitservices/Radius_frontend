@@ -66,7 +66,7 @@ function SearchResults() {
               onClick={refresh}
               disabled={locLoading}
               className="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50"
-              style={{ color: location.isDefault ? 'var(--ry-orange)' : 'var(--ry-green)' }}
+              style={{ color: location.isDefault ? 'var(--brand)' : 'var(--brand)' }}
             >
               <LocateFixed size={11} />
               {locLoading ? 'Locating...' : location.isDefault ? 'Using Vijayawada (tap to update)' : 'Location detected'}
@@ -79,7 +79,7 @@ function SearchResults() {
           <select
             value={radius}
             onChange={(e) => setRadius(Number(e.target.value))}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-green-600"
+            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-[var(--brand)]"
           >
             <option value={1}>Within 1 km</option>
             <option value={2}>Within 2 km</option>
@@ -95,7 +95,7 @@ function SearchResults() {
           <button
             onClick={clearCategory}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold text-white flex-shrink-0"
-            style={{ backgroundColor: 'var(--ry-green)' }}
+            style={{ backgroundColor: 'var(--brand)' }}
           >
             {CATEGORY_ICONS[categoryParam]} {CATEGORY_LABELS[categoryParam]}
             <X size={13} />
@@ -116,7 +116,7 @@ function SearchResults() {
       {/* Loading */}
       {(isLoading || locLoading) && (
         <div className="flex flex-col items-center justify-center py-20 gap-3">
-          <Loader2 className="animate-spin text-green-600" size={40} />
+          <Loader2 className="animate-spin text-[var(--brand)]" size={40} />
           <p className="text-gray-500 text-sm">{locLoading ? 'Getting your location...' : 'Finding shops near you...'}</p>
         </div>
       )}
@@ -146,8 +146,8 @@ function SearchResults() {
             )}
             <button
               onClick={() => setRadius(Math.min(radius + 5, 20))}
-              className="px-5 py-2 rounded-lg text-white font-semibold text-sm"
-              style={{ backgroundColor: 'var(--ry-green)' }}
+              className="px-5 py-2 rounded-full text-white font-semibold text-sm"
+              style={{ backgroundColor: 'var(--brand)' }}
             >
               Expand to {Math.min(radius + 5, 20)}km
             </button>

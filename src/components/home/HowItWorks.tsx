@@ -9,39 +9,39 @@ const STEPS = [
 
 export default function HowItWorks() {
   return (
-    <section className="bg-white rounded-2xl p-6 border border-gray-100">
+    <section className="ry-card p-6 sm:p-8">
       <div className="text-center mb-6">
-        <span className="text-xs font-bold uppercase tracking-widest text-green-700">How it works</span>
-        <h2 className="text-2xl font-black text-gray-900 mt-1">Six steps. Three minutes. Product in hand.</h2>
-        <p className="text-gray-500 mt-1 text-sm">No delivery. No waiting. No commission.</p>
+        <span className="text-xs font-bold uppercase tracking-widest text-[var(--brand-ink)]">How it works</span>
+        <h2 className="text-2xl font-black mt-1" style={{ color: 'var(--foreground)' }}>Six steps. Three minutes. Product in hand.</h2>
+        <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>No delivery. No waiting. No commission.</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {STEPS.map((step) => (
-          <div key={step.n} className="text-center p-4 rounded-xl bg-gray-50 hover:bg-green-50 transition-colors">
+          <div key={step.n} className="text-center p-4 rounded-[22px] transition-colors hover:bg-[var(--brand-light)]" style={{ background: 'var(--surface-2)' }}>
             <div
-              className="w-8 h-8 rounded-lg text-white text-xs font-black flex items-center justify-center mx-auto mb-2"
-              style={{ backgroundColor: 'var(--ry-green)' }}
+              className="w-8 h-8 rounded-full text-xs font-black flex items-center justify-center mx-auto mb-2"
+              style={{ backgroundColor: 'var(--brand)', color: 'var(--on-brand)' }}
             >
               {step.n}
             </div>
             <div className="text-2xl mb-2">{step.icon}</div>
-            <h3 className="font-bold text-gray-900 text-sm mb-1">{step.title}</h3>
-            <p className="text-xs text-gray-500 leading-relaxed">{step.desc}</p>
+            <h3 className="font-bold text-sm mb-1" style={{ color: 'var(--foreground)' }}>{step.title}</h3>
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>{step.desc}</p>
           </div>
         ))}
       </div>
 
       {/* Value props */}
-      <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-100">
+      <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t" style={{ borderColor: 'var(--border)' }}>
         {[
-          { label: '6 Months Free', sub: 'for all vendors', color: 'text-green-700' },
-          { label: '0% Commission', sub: 'ever, for anyone', color: 'text-orange-600' },
-          { label: '3 Taps', sub: 'find, call, navigate', color: 'text-blue-600' },
+          { label: '6 Months Free', sub: 'for all vendors', color: 'text-[var(--brand-ink)]' },
+          { label: '0% Commission', sub: 'ever, for anyone', color: 'text-[var(--brand-ink)]' },
+          { label: '3 Taps', sub: 'find, call, navigate', color: 'text-[var(--brand-ink)]' },
         ].map((v) => (
           <div key={v.label} className="text-center">
             <p className={`text-xl font-black ${v.color}`}>{v.label}</p>
-            <p className="text-xs text-gray-500 mt-0.5">{v.sub}</p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{v.sub}</p>
           </div>
         ))}
       </div>

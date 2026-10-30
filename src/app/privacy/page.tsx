@@ -60,13 +60,13 @@ export default function PrivacyPage() {
 
         <section>
           <h2 className="text-lg font-bold text-gray-900 mb-2">6. Your Rights</h2>
-          <p>Under applicable Indian law (IT Act 2000 and DPDP Act 2023), you have the right to access, correct, and request deletion of your personal data. Contact us at <a href="mailto:privacy@radiuyes.com" className="text-green-700 underline">privacy@radiuyes.com</a>.</p>
+          <p>Under applicable Indian law (IT Act 2000 and DPDP Act 2023), you have the right to access, correct, and request deletion of your personal data. Contact us at <a href="mailto:privacy@radiuyes.com" className="text-[var(--brand-ink)] underline">privacy@radiuyes.com</a>.</p>
         </section>
 
         <section>
           <h2 className="text-lg font-bold text-gray-900 mb-2">7. Contact</h2>
           <p>GenieHost Private Limited, Vijayawada, Andhra Pradesh 520001, India.<br />
-          Email: <a href="mailto:privacy@radiuyes.com" className="text-green-700 underline">privacy@radiuyes.com</a></p>
+          Email: <a href="mailto:privacy@radiuyes.com" className="text-[var(--brand-ink)] underline">privacy@radiuyes.com</a></p>
         </section>
       </div>
     </div>

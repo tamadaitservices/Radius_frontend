@@ -12,14 +12,14 @@ export default function NotFound() {
       <div className="flex gap-3 flex-wrap justify-center">
         <Link
           href="/"
-          className="px-6 py-3 rounded-xl text-white font-bold text-sm"
-          style={{ backgroundColor: 'var(--ry-green)' }}
+          className="px-6 py-3 rounded-full text-white font-bold text-sm"
+          style={{ backgroundColor: 'var(--brand)' }}
         >
           Browse Shops
         </Link>
         <Link
           href="/search"
-          className="px-6 py-3 rounded-xl border-2 font-bold text-sm text-gray-700 hover:bg-gray-50"
+          className="px-6 py-3 rounded-2xl border-2 font-bold text-sm text-gray-700 hover:bg-gray-50"
           style={{ borderColor: 'var(--ry-border)' }}
         >
           Search Products

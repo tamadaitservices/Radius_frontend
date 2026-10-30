@@ -11,17 +11,43 @@
   --ry-red-light: #fef2f2;
   --ry-border: #e8e8e8;
 
+  /* Brand: vibrant orange on warm cream (the "Shops" palette). Each home mode overrides these. */
+  --brand: #ff6a1a;
+  --brand-dark: #e0540a;
+  --brand-ink: #ff6a1a;
+  --brand-light: #ffe6d6;
+  --on-brand: #ffffff;
+  --navy: #0f1b3d;
+  --star: #ffb224;
+  --success: #16a34a;
+  --success-light: #dcfce7;
+  --page-top: #ffebe8;
+  --page-bottom: #fffbf7;
+  --tint-1: #ffe3dc;
+  --tint-2: #faf1d2;
+  --tint-3: #ffe6eb;
+  --tint-4: #eae8fc;
+  --tint-5: #e3f3ea;
+  --shadow-card: 0 6px 18px rgba(15, 27, 61, 0.07);
+  --shadow-lift: 0 12px 28px rgba(15, 27, 61, 0.12);
+
+  /* Fixed per-mode colours (used by the header mode pills and the colour reveal) */
+  --m-shops: #ff6a1a;    --m-shops-on: #ffffff;
+  --m-preowned: #3478f6; --m-preowned-on: #ffffff;
+  --m-places: #ffc928;   --m-places-on: #111111;
+  --m-food: #e23744;     --m-food-on: #ffffff;
+
   /* Light mode */
-  --background: #ffffff;
-  --foreground: #1a1a1a;
-  --surface: #f9fafb;
-  --surface-2: #f2f4f6;
-  --text-muted: #6b7280;
-  --text-subtle: #9ca3af;
-  --border: #e5e7eb;
-  --input-bg: #f9fafb;
-  --header-bg: rgba(255, 255, 255, 0.95);
-  --category-bg: #e8f5e9;
+  --background: #fffbf7;
+  --foreground: #0f1b3d;
+  --surface: #ffffff;
+  --surface-2: #fff4eb;
+  --text-muted: #7a6a5c;
+  --text-subtle: #a89b8f;
+  --border: #ffeadb;
+  --input-bg: #ffffff;
+  --header-bg: rgba(255, 251, 247, 0.85);
+  --category-bg: #ffe6d6;
   --footer-bg: #111827;
   --footer-text: #d1d5db;
   --footer-text-muted: #6b7280;
@@ -30,16 +56,31 @@
 }
 
 .dark {
-  --background: #000000;
-  --foreground: #ffffff;
-  --surface: #111111;
-  --surface-2: #1a1a1a;
-  --text-muted: #a3a3a3;
-  --text-subtle: #737373;
-  --border: #2a2a2a;
-  --input-bg: #111111;
-  --header-bg: rgba(0, 0, 0, 0.95);
-  --category-bg: #1a1a1a;
+  --brand: #ff7a33;
+  --brand-ink: #ff7a33;
+  --brand-light: #3a2314;
+  --success-light: #0f3d29;
+  --page-top: #0b1224;
+  --page-bottom: #0b1224;
+  --tint-1: #1b2542;
+  --tint-2: #1b2542;
+  --tint-3: #1b2542;
+  --tint-4: #1b2542;
+  --tint-5: #1b2542;
+  --m-preowned: #5b93ff;
+  --m-food: #ff4d5a;
+  --shadow-card: 0 6px 18px rgba(0, 0, 0, 0.35);
+  --shadow-lift: 0 12px 28px rgba(0, 0, 0, 0.5);
+  --background: #0b1224;
+  --foreground: #f4f6fb;
+  --surface: #121b33;
+  --surface-2: #18223c;
+  --text-muted: #9aa6c2;
+  --text-subtle: #6f7b99;
+  --border: #22304f;
+  --input-bg: #121b33;
+  --header-bg: rgba(11, 18, 36, 0.85);
+  --category-bg: #18223c;
   --footer-bg: #000000;
   --footer-text: #a3a3a3;
   --footer-text-muted: #525252;
@@ -50,6 +91,29 @@
   --ry-red-light: #1a0a0a;
   --ry-border: #2a2a2a;
 }
+
+/* ── Home mode palettes (set via <html data-mode="...">) ──
+   Shops = orange (default above) · Resale = blue · Places = yellow/black · Food = Zomato red */
+html[data-mode='preowned'] {
+  --brand: #3478f6; --brand-dark: #2b66dc; --brand-ink: #2b66dc; --brand-light: #dce8ff; --on-brand: #ffffff;
+  --page-top: #e4eeff; --page-bottom: #ffffff;
+  --tint-1: #dce8ff; --tint-2: #e8f0ff; --tint-3: #ddebff; --tint-4: #eaf2ff; --tint-5: #d3e3fa;
+}
+html[data-mode='places'] {
+  --brand: #ffc928; --brand-dark: #e5b010; --brand-ink: #111111; --brand-light: #fff1b8; --on-brand: #111111;
+  --foreground: #111111;
+  --page-top: #fff0b3; --page-bottom: #ffffff;
+  --tint-1: #fff1b8; --tint-2: #fff6d3; --tint-3: #ffefa0; --tint-4: #fff9e0; --tint-5: #ffeba3;
+}
+html[data-mode='food'] {
+  --brand: #e23744; --brand-dark: #c82a37; --brand-ink: #e23744; --brand-light: #ffe3e6; --on-brand: #ffffff;
+  --foreground: #1c1c1c;
+  --page-top: #ffe6e9; --page-bottom: #ffffff;
+  --tint-1: #ffe3e6; --tint-2: #ffefd9; --tint-3: #ffd9de; --tint-4: #ffe9e2; --tint-5: #fdecee;
+}
+html.dark[data-mode='preowned'] { --brand: #5b93ff; --brand-ink: #8db2ff; --brand-light: #1a2c52; --page-top: #0b1224; --page-bottom: #0b1224; }
+html.dark[data-mode='places']   { --brand: #ffc928; --brand-ink: #ffd75e; --brand-light: #3a3010; --on-brand: #111111; --foreground: #f4f6fb; --page-top: #0b1224; --page-bottom: #0b1224; }
+html.dark[data-mode='food']     { --brand: #ff4d5a; --brand-ink: #ff6b76; --brand-light: #3a1a1e; --foreground: #f4f6fb; --page-top: #0b1224; --page-bottom: #0b1224; }
 
 @theme inline {
   --color-background: var(--background);
@@ -247,3 +311,16 @@ body {
   50% { opacity: 0.6; }
 }
 .pulse-green { animation: pulse-green 2s ease-in-out infinite; }
+
+
+/* ── Shared design primitives (customer site) ── */
+.ry-page { background: linear-gradient(to bottom, var(--page-top), var(--page-bottom) 45%); background-attachment: fixed; }
+.ry-card { background: var(--surface); border: 1px solid var(--border); border-radius: 28px; box-shadow: var(--shadow-card); }
+.ry-pill-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 9999px; font-weight: 600; padding: 12px 22px; background: var(--brand); color: var(--on-brand); transition: transform .15s ease, box-shadow .15s ease, filter .15s ease; }
+.ry-pill-btn:hover { filter: brightness(1.05); box-shadow: 0 8px 18px color-mix(in srgb, var(--brand) 35%, transparent); }
+.ry-pill-btn:active { transform: scale(.98); }
+.ry-pill-ghost { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 9999px; font-weight: 600; padding: 12px 22px; background: var(--surface); color: var(--foreground); border: 1px solid var(--border); transition: background .15s ease; }
+.ry-pill-ghost:hover { background: var(--surface-2); }
+.ry-round-btn { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 9999px; background: var(--brand); color: var(--on-brand); box-shadow: 0 6px 14px color-mix(in srgb, var(--brand) 35%, transparent); flex-shrink: 0; }
+.ry-glass { background: rgba(255, 255, 255, 0.74); border: 1px solid rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.dark .ry-glass { background: rgba(18, 27, 51, 0.78); border-color: rgba(255, 255, 255, 0.08); }

@@ -49,13 +49,13 @@ export default function MyRequestsPage() {
       <h1 className="text-xl font-black text-gray-900 mb-6">My Requests</h1>
 
       {isLoading ? (
-        <div className="flex justify-center py-12"><Loader2 className="animate-spin text-orange-500" size={32} /></div>
+        <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[var(--brand)]" size={32} /></div>
       ) : !data?.length ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
+        <div className="text-center py-16 ry-card">
           <div className="text-4xl mb-3">📞</div>
           <p className="font-bold text-gray-900 mb-1">No requests yet</p>
           <p className="text-sm text-gray-500 mb-4">Browse Pre-Owned listings and request contact on something you like.</p>
-          <a href="/sell" className="inline-block px-6 py-2 rounded-xl text-white font-semibold text-sm" style={{ backgroundColor: 'var(--ry-orange)' }}>
+          <a href="/sell" className="inline-block px-6 py-2 rounded-full text-white font-semibold text-sm" style={{ backgroundColor: 'var(--brand)' }}>
             Browse Pre-Owned
           </a>
         </div>
@@ -64,7 +64,7 @@ export default function MyRequestsPage() {
           {data.map((r) => {
             const sc = STATUS_CONFIG[r.status];
             return (
-              <div key={r.id} className="bg-white rounded-2xl border border-gray-100 p-4">
+              <div key={r.id} className="ry-card p-4">
                 <div className="flex gap-3">
                   <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
                     {r.listing.images?.[0] ? (
@@ -90,8 +90,8 @@ export default function MyRequestsPage() {
                 {r.status === 'APPROVED' && r.sellerPhone && (
                   <a
                     href={`tel:${r.sellerPhone}`}
-                    className="mt-3 flex items-center justify-center gap-2 w-full py-3 rounded-xl text-white font-bold text-sm"
-                    style={{ backgroundColor: 'var(--ry-green)' }}
+                    className="mt-3 flex items-center justify-center gap-2 w-full py-3 rounded-full text-white font-bold text-sm"
+                    style={{ backgroundColor: 'var(--brand)' }}
                   >
                     <Phone size={16} />
                     Call {r.sellerName || 'Seller'} — {r.sellerPhone}

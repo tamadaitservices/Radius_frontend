@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { Home, Shield, ArrowLeft, Loader2, LocateFixed, ChevronRight, Mail, Phone } from 'lucide-react';
+import { Home, Shield, ArrowLeft, Loader2, LocateFixed, ChevronRight, Mail, Phone, MapPin } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
@@ -157,7 +157,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="fixed inset-0 z-[200] overflow-y-auto flex flex-col" style={{ background: 'var(--background)' }}>
+    <div className="ry-page fixed inset-0 z-[200] overflow-y-auto flex flex-col">
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 pt-5 pb-2">
         {step !== 'email' ? (
@@ -168,8 +168,7 @@ export default function LoginPage() {
 
         <Link
           href="/"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold border"
-          style={{ color: 'var(--text-muted)', borderColor: 'var(--border)' }}
+          className="ry-pill-ghost !py-2 !px-4 text-sm"
         >
           <Home size={14} /> Home
         </Link>
@@ -181,13 +180,21 @@ export default function LoginPage() {
 
           {/* Logo */}
           <div className="text-center">
-            <h1 className="text-3xl font-black tracking-tight">
-              <span style={{ color: 'var(--foreground)' }}>Radiu</span>
-              <span style={{ color: 'var(--ry-green)' }}>Yes</span>
+            <div
+              className="w-20 h-20 rounded-[26px] mx-auto mb-5 flex items-center justify-center"
+              style={{ background: 'var(--brand)', color: 'var(--on-brand)', boxShadow: '0 14px 28px color-mix(in srgb, var(--brand) 35%, transparent)' }}
+            >
+              <MapPin size={38} />
+            </div>
+            <h1 className="text-3xl font-black tracking-tight" style={{ color: 'var(--foreground)' }}>
+              {step === 'email' && 'Welcome Back'}
+              {step === 'otp' && 'Enter your code'}
+              {step === 'profile' && 'Welcome!'}
+              {step === 'location' && 'Near you'}
             </h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
-              {step === 'email' && 'Sign in to continue'}
-              {step === 'otp' && `Check your email — ${email}`}
+            <p className="text-sm mt-2 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+              {step === 'email' && 'Find shops, places and resale deals right around you.'}
+              {step === 'otp' && `We sent a 6-digit code to ${email}`}
               {step === 'profile' && 'Tell us a bit about yourself'}
               {step === 'location' && 'Allow location for nearby shops'}
             </p>
@@ -201,7 +208,7 @@ export default function LoginPage() {
                 <div className="relative">
                   <Mail
                     size={16}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                    className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"
                     style={{ color: 'var(--text-subtle)' }}
                   />
                   <input
@@ -209,7 +216,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
-                    className="w-full h-12 pl-9 pr-4 rounded-xl border-2 focus:outline-none text-base"
+                    className="w-full h-[52px] pl-11 pr-4 rounded-2xl border focus:outline-none focus:border-[var(--brand)] text-base"
                     style={{ background: 'var(--input-bg)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
                     autoFocus
                     onKeyDown={(e) => e.key === 'Enter' && email.includes('@') && !sending && handleSendOtp()}
@@ -220,10 +227,9 @@ export default function LoginPage() {
               <button
                 onClick={handleSendOtp}
                 disabled={!email.includes('@') || sending}
-                className="w-full py-3 rounded-xl text-white font-bold text-base flex items-center justify-center gap-2 disabled:opacity-50"
-                style={{ backgroundColor: 'var(--ry-green)' }}
+                className="ry-pill-btn w-full !py-3.5 text-base disabled:opacity-50"
               >
-                {sending ? <><Loader2 size={16} className="animate-spin" /> Sending...</> : <>Continue with Email <ChevronRight size={16} /></>}
+                {sending ? <><Loader2 size={16} className="animate-spin" /> Sending...</> : <>Login <ChevronRight size={16} /></>}
               </button>
 
               {/* Divider */}
@@ -242,7 +248,7 @@ export default function LoginPage() {
                   size="large"
                   width="100%"
                   text="continue_with"
-                  shape="rectangular"
+                  shape="pill"
                 />
               </div>
 
@@ -263,7 +269,7 @@ export default function LoginPage() {
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   placeholder="• • • • • •"
-                  className="w-full text-center py-3 px-4 border-2 rounded-xl focus:outline-none text-2xl font-bold tracking-[0.5em]"
+                  className="w-full text-center py-3 px-4 border-2 rounded-2xl focus:outline-none text-2xl font-bold tracking-[0.5em]"
                   style={{ background: 'var(--input-bg)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
                   maxLength={6}
                   autoFocus
@@ -274,8 +280,7 @@ export default function LoginPage() {
               <button
                 onClick={handleVerifyOtp}
                 disabled={otp.length !== 6 || verifying}
-                className="w-full py-3 rounded-xl text-white font-bold flex items-center justify-center gap-2 disabled:opacity-50"
-                style={{ backgroundColor: 'var(--ry-green)' }}
+                className="ry-pill-btn w-full !py-3.5 disabled:opacity-50"
               >
                 {verifying ? <><Loader2 size={16} className="animate-spin" /> Verifying...</> : 'Verify OTP'}
               </button>
@@ -308,7 +313,7 @@ export default function LoginPage() {
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Ravi Kumar"
                   autoFocus
-                  className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none text-base"
+                  className="w-full px-4 py-3 border-2 rounded-2xl focus:outline-none text-base"
                   style={{ background: 'var(--input-bg)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
                 />
               </div>
@@ -318,7 +323,7 @@ export default function LoginPage() {
                   Mobile Number{' '}
                   <span className="text-sm font-normal" style={{ color: 'var(--text-subtle)' }}>(optional)</span>
                 </label>
-                <div className="flex rounded-xl border-2 overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+                <div className="flex rounded-2xl border-2 overflow-hidden" style={{ borderColor: 'var(--border)' }}>
                   <span className="flex items-center px-3 text-sm font-medium border-r" style={{ color: 'var(--text-muted)', borderColor: 'var(--border)', background: 'var(--surface)' }}>
                     <Phone size={14} className="mr-1" /> +91
                   </span>
@@ -338,8 +343,7 @@ export default function LoginPage() {
               <button
                 onClick={handleSaveProfile}
                 disabled={!name.trim() || savingProfile}
-                className="w-full py-3 rounded-xl text-white font-bold flex items-center justify-center gap-2 disabled:opacity-50"
-                style={{ backgroundColor: 'var(--ry-green)' }}
+                className="ry-pill-btn w-full !py-3.5 disabled:opacity-50"
               >
                 {savingProfile ? <><Loader2 size={16} className="animate-spin" /> Saving...</> : <>Continue <ChevronRight size={16} /></>}
               </button>
@@ -360,8 +364,7 @@ export default function LoginPage() {
               <button
                 onClick={() => handleSaveLocation(false)}
                 disabled={savingLocation}
-                className="w-full py-3 rounded-xl text-white font-bold flex items-center justify-center gap-2 disabled:opacity-50"
-                style={{ backgroundColor: 'var(--ry-green)' }}
+                className="ry-pill-btn w-full !py-3.5 disabled:opacity-50"
               >
                 {savingLocation
                   ? <><Loader2 size={16} className="animate-spin" /> Getting location...</>

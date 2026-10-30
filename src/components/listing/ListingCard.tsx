@@ -1,8 +1,6 @@
 'use client';
 
-import Link from 'next/link';
-import Image from 'next/image';
-import { MapPin } from 'lucide-react';
+import GlassCard, { Pill } from '@/components/ui/GlassCard';
 import { formatDistance, formatPrice, LISTING_CATEGORY_ICONS, LISTING_CONDITION_LABELS } from '@/lib/utils';
 
 interface ListingCardProps {
@@ -18,51 +16,27 @@ interface ListingCardProps {
     distance?: number;
     status?: string;
   };
+  index?: number;
 }
 
-export default function ListingCard({ listing }: ListingCardProps) {
-  const cover = listing.images?.[0];
+export default function ListingCard({ listing, index = 0 }: ListingCardProps) {
+  const sold = listing.status === 'SOLD';
+  const meta = [typeof listing.distance === 'number' ? formatDistance(listing.distance) : null, listing.area]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
-    <Link
+    <GlassCard
       href={`/listing/${listing.id}`}
-      className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow block"
-    >
-      <div className="relative h-36 bg-gray-100">
-        {cover ? (
-          <Image src={cover} alt={listing.title} fill className="object-cover" sizes="(max-width: 640px) 100vw, 300px" />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-4xl">
-            {LISTING_CATEGORY_ICONS[listing.category] || '📦'}
-          </div>
-        )}
-        {listing.status === 'SOLD' && (
-          <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-            <span className="text-xs font-black px-3 py-1.5 rounded-lg text-white bg-gray-700">Sold</span>
-          </div>
-        )}
-        <span className="absolute top-2 left-2 text-xs font-bold px-2 py-0.5 rounded-md bg-white/90 text-gray-700">
-          {LISTING_CONDITION_LABELS[listing.condition] || listing.condition}
-        </span>
-      </div>
-
-      <div className="p-3">
-        <p className="font-black text-gray-900">{formatPrice(listing.price)}</p>
-        <h3 className="font-semibold text-gray-800 text-sm leading-tight mt-0.5 line-clamp-2">{listing.title}</h3>
-
-        <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-500">
-          {typeof listing.distance === 'number' && (
-            <>
-              <div className="flex items-center gap-0.5">
-                <MapPin size={11} />
-                <span>{formatDistance(listing.distance)}</span>
-              </div>
-              <span>•</span>
-            </>
-          )}
-          <span>{listing.area}</span>
-        </div>
-      </div>
-    </Link>
+      image={listing.images?.[0]}
+      fallbackEmoji={LISTING_CATEGORY_ICONS[listing.category] || '📦'}
+      title={listing.title}
+      subtitle={meta}
+      price={formatPrice(listing.price)}
+      badge={<Pill>{LISTING_CONDITION_LABELS[listing.condition] || listing.condition}</Pill>}
+      badgeRight={sold ? <Pill tone="dark">Sold</Pill> : undefined}
+      tint={index + 1}
+      muted={sold}
+    />
   );
 }

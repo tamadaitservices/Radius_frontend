@@ -57,7 +57,7 @@ export default function TermsPage() {
 
         <section>
           <h2 className="text-lg font-bold text-gray-900 mb-2">8. Contact</h2>
-          <p>For any queries, email <a href="mailto:hello@radiuyes.com" className="text-green-700 underline">hello@radiuyes.com</a>.</p>
+          <p>For any queries, email <a href="mailto:hello@radiuyes.com" className="text-[var(--brand-ink)] underline">hello@radiuyes.com</a>.</p>
         </section>
       </div>
     </div>

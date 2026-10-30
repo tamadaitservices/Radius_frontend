@@ -31,7 +31,7 @@ export default function FeaturedShops() {
         <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--foreground)' }}>Shops Near You</h2>
         <RadiusMapControl />
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="animate-spin text-green-600" size={32} />
+          <Loader2 className="animate-spin text-[var(--brand)]" size={32} />
         </div>
       </section>
     );
@@ -44,7 +44,7 @@ export default function FeaturedShops() {
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-bold" style={{ color: 'var(--foreground)' }}>Shops Near You</h2>
         {zone && (
-          <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: 'var(--ry-green-light)', color: 'var(--ry-green)' }}>
+          <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: 'var(--brand-light)', color: 'var(--brand)' }}>
             <MapPin size={11} />
             {zone.name}
           </span>

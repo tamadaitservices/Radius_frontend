@@ -63,7 +63,7 @@ export default function ReviewForm({ reservationId, shopName, onDone }: Props) {
           >
             <Star
               size={24}
-              className={n <= (hover || rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
+              className={n <= (hover || rating) ? '' : 'text-gray-300'}
             />
           </button>
         ))}
@@ -74,14 +74,14 @@ export default function ReviewForm({ reservationId, shopName, onDone }: Props) {
         onChange={(e) => setComment(e.target.value)}
         placeholder="Share your experience (optional)"
         rows={2}
-        className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl text-sm focus:border-yellow-400 focus:outline-none resize-none mb-2"
+        className="w-full px-3 py-2 border-2 border-gray-200 rounded-2xl text-sm focus:border-yellow-400 focus:outline-none resize-none mb-2"
         maxLength={500}
       />
 
       <button
         onClick={() => submit.mutate()}
         disabled={rating === 0 || submit.isPending}
-        className="w-full py-2 rounded-xl text-white font-bold text-sm disabled:opacity-50"
+        className="w-full py-2 rounded-full text-white font-bold text-sm disabled:opacity-50"
         style={{ backgroundColor: '#f59e0b' }}
       >
         {submit.isPending ? 'Submitting...' : 'Submit Review'}

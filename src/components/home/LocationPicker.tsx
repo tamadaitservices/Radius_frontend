@@ -202,9 +202,9 @@ export default function LocationPicker({ onClose }: Props) {
           <div className="flex items-center gap-2">
             <div
               className="w-8 h-8 rounded-xl flex items-center justify-center"
-              style={{ background: 'var(--ry-green-light)' }}
+              style={{ background: 'var(--brand-light)' }}
             >
-              <MapPin size={16} style={{ color: 'var(--ry-green)' }} />
+              <MapPin size={16} style={{ color: 'var(--brand)' }} />
             </div>
             <h2 className="font-bold text-base" style={{ color: 'var(--foreground)' }}>
               Set your location
@@ -238,7 +238,7 @@ export default function LocationPicker({ onClose }: Props) {
                 color: 'var(--foreground)',
               }}
               onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'var(--ry-green)';
+                e.currentTarget.style.borderColor = 'var(--brand)';
                 e.currentTarget.style.boxShadow = '0 0 0 3px rgba(12,131,31,0.08)';
               }}
               onBlur={(e) => {
@@ -274,10 +274,10 @@ export default function LocationPicker({ onClose }: Props) {
           {/* Current location pill */}
           <div
             className="flex items-center gap-2 px-3 py-2.5 rounded-2xl"
-            style={{ background: 'var(--ry-green-light)', border: '1px solid rgba(12,131,31,0.12)' }}
+            style={{ background: 'var(--brand-light)', border: '1px solid rgba(12,131,31,0.12)' }}
           >
-            <MapPin size={14} style={{ color: 'var(--ry-green)', flexShrink: 0 }} />
-            <span className="text-sm font-medium truncate" style={{ color: 'var(--ry-green)' }}>
+            <MapPin size={14} style={{ color: 'var(--brand)', flexShrink: 0 }} />
+            <span className="text-sm font-medium truncate" style={{ color: 'var(--brand)' }}>
               {label}
             </span>
           </div>
@@ -299,12 +299,12 @@ export default function LocationPicker({ onClose }: Props) {
             disabled={detecting}
             className="flex items-center justify-center gap-2 h-11 rounded-2xl border text-sm font-semibold transition-all"
             style={{
-              borderColor: 'var(--ry-green)',
-              color: 'var(--ry-green)',
+              borderColor: 'var(--brand)',
+              color: 'var(--brand)',
               background: 'transparent',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'var(--ry-green-light)';
+              e.currentTarget.style.background = 'var(--brand-light)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = 'transparent';
@@ -320,7 +320,7 @@ export default function LocationPicker({ onClose }: Props) {
           <button
             onClick={onClose}
             className="h-11 rounded-2xl text-white text-sm font-bold transition-opacity hover:opacity-90 active:opacity-80"
-            style={{ backgroundColor: 'var(--ry-green)' }}
+            style={{ backgroundColor: 'var(--brand)' }}
           >
             Confirm location
           </button>

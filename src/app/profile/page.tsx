@@ -54,7 +54,7 @@ function AvatarDisplay({ value, size = 64 }: { value?: string | null; size?: num
   return (
     <div
       className="flex items-center justify-center rounded-2xl flex-shrink-0 text-white font-black"
-      style={{ width: size, height: size, backgroundColor: 'var(--ry-green)', fontSize: size * 0.38 }}
+      style={{ width: size, height: size, backgroundColor: 'var(--brand)', fontSize: size * 0.38 }}
     >
       {String.fromCodePoint(0x1F464)}
     </div>
@@ -156,7 +156,7 @@ export default function ProfilePage() {
                 <h1 className="text-xl font-black truncate" style={{ color: 'var(--foreground)' }}>
                   {user.name || <span className="font-medium text-base italic" style={{ color: 'var(--text-subtle)' }}>No name set</span>}
                 </h1>
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: 'var(--ry-green-light)', color: 'var(--ry-green)' }}>
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: 'var(--brand-light)', color: 'var(--brand)' }}>
                   Lv.{level}
                 </span>
               </div>
@@ -173,13 +173,13 @@ export default function ProfilePage() {
                 <button
                   onClick={() => setEditing(true)}
                   className="flex items-center gap-1 text-sm mt-1 font-medium"
-                  style={{ color: 'var(--ry-orange)' }}
+                  style={{ color: 'var(--brand)' }}
                 >
                   <Phone size={13} /> Add mobile number
                 </button>
               )}
               {user.role === 'CUSTOMER' && (
-                <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full mt-1.5" style={{ color: 'var(--ry-green)', background: 'var(--ry-green-light)' }}>
+                <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full mt-1.5" style={{ color: 'var(--brand)', background: 'var(--brand-light)' }}>
                   <CheckCircle size={11} /> Verified Customer
                 </span>
               )}
@@ -289,8 +289,8 @@ export default function ProfilePage() {
 
             <button
               onClick={() => saveProfile.mutate()} disabled={saveProfile.isPending}
-              className="w-full py-2.5 rounded-xl text-white text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-60"
-              style={{ backgroundColor: 'var(--ry-green)' }}
+              className="w-full py-2.5 rounded-full text-white text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-60"
+              style={{ backgroundColor: 'var(--brand)' }}
             >
               <Save size={14} /> {saveProfile.isPending ? 'Saving…' : 'Save Changes'}
             </button>
@@ -307,7 +307,7 @@ export default function ProfilePage() {
           </div>
           <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
             <div className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${(purchasesInCurrentLevel / 3) * 100}%`, backgroundColor: 'var(--ry-green)' }} />
+              style={{ width: `${(purchasesInCurrentLevel / 3) * 100}%`, backgroundColor: 'var(--brand)' }} />
           </div>
           <p className="text-xs mt-1.5" style={{ color: 'var(--text-subtle)' }}>
             {purchasesToNextLevel} more confirmed purchase{purchasesToNextLevel !== 1 ? 's' : ''} to unlock <strong>{AVATARS[level]}</strong>
@@ -315,8 +315,8 @@ export default function ProfilePage() {
         </div>
       )}
       {level === 20 && (
-        <div className="rounded-2xl p-4 text-center border" style={{ background: 'var(--ry-green-light)', borderColor: 'rgba(12,131,31,0.2)' }}>
-          <p className="font-bold text-sm" style={{ color: 'var(--ry-green)' }}>🏆 Max level reached! All avatars unlocked.</p>
+        <div className="rounded-2xl p-4 text-center border" style={{ background: 'var(--brand-light)', borderColor: 'rgba(12,131,31,0.2)' }}>
+          <p className="font-bold text-sm" style={{ color: 'var(--brand)' }}>🏆 Max level reached! All avatars unlocked.</p>
         </div>
       )}
 
@@ -341,13 +341,13 @@ export default function ProfilePage() {
           <h2 className="font-bold flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
             <ShoppingBag size={16} /> Recent Reservations
           </h2>
-          <Link href="/reservations" className="text-sm font-semibold" style={{ color: 'var(--ry-green)' }}>View all</Link>
+          <Link href="/reservations" className="text-sm font-semibold" style={{ color: 'var(--brand)' }}>View all</Link>
         </div>
 
         {!reservations?.length ? (
           <div className="text-center py-8">
             <p className="text-sm" style={{ color: 'var(--text-subtle)' }}>No reservations yet. Start browsing!</p>
-            <Link href="/" className="mt-3 inline-block px-5 py-2 rounded-xl text-white text-sm font-bold" style={{ backgroundColor: 'var(--ry-green)' }}>
+            <Link href="/" className="mt-3 inline-block px-5 py-2 rounded-full text-white text-sm font-bold" style={{ backgroundColor: 'var(--brand)' }}>
               Browse Shops
             </Link>
           </div>
@@ -371,10 +371,10 @@ export default function ProfilePage() {
                   </span>
                 </div>
                 {res.status === 'ACCEPTED' && res.pin && (
-                  <div className="mt-2 flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: 'var(--ry-green-light)', border: '1px solid rgba(12,131,31,0.15)' }}>
-                    <span className="text-xs font-medium" style={{ color: 'var(--ry-green)' }}>Show to vendor:</span>
-                    <span className="text-xl font-black tracking-[0.3em]" style={{ color: 'var(--ry-green)' }}>{res.pin}</span>
-                    <span className="ml-auto text-xs" style={{ color: 'var(--ry-green)' }}>Purchase PIN</span>
+                  <div className="mt-2 flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: 'var(--brand-light)', border: '1px solid rgba(12,131,31,0.15)' }}>
+                    <span className="text-xs font-medium" style={{ color: 'var(--brand)' }}>Show to vendor:</span>
+                    <span className="text-xl font-black tracking-[0.3em]" style={{ color: 'var(--brand)' }}>{res.pin}</span>
+                    <span className="ml-auto text-xs" style={{ color: 'var(--brand)' }}>Purchase PIN</span>
                   </div>
                 )}
               </div>
@@ -390,13 +390,13 @@ export default function ProfilePage() {
             <h2 className="font-bold flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
               <Tag size={16} /> My Listings
             </h2>
-            <Link href="/sell/my-listings" className="text-sm font-semibold" style={{ color: 'var(--ry-green)' }}>View all</Link>
+            <Link href="/sell/my-listings" className="text-sm font-semibold" style={{ color: 'var(--brand)' }}>View all</Link>
           </div>
 
           {!myListings?.length ? (
             <div className="text-center py-8">
               <p className="text-sm" style={{ color: 'var(--text-subtle)' }}>No listings yet. Got something to sell?</p>
-              <Link href="/sell/new" className="inline-block mt-3 px-4 py-2 rounded-xl text-white text-sm font-semibold" style={{ backgroundColor: 'var(--ry-orange)' }}>
+              <Link href="/sell/new" className="inline-block mt-3 px-4 py-2 rounded-full text-white text-sm font-semibold" style={{ backgroundColor: 'var(--brand)' }}>
                 Post a Listing
               </Link>
             </div>

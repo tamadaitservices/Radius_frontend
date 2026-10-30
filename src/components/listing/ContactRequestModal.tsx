@@ -91,7 +91,7 @@ export default function ContactRequestModal({ listing, onClose }: Props) {
                   type="number"
                   value={askingPrice}
                   onChange={(e) => setAskingPrice(e.target.value)}
-                  className="w-full pl-7 pr-4 py-2.5 border border-gray-200 rounded-xl focus:border-orange-500 focus:outline-none"
+                  className="w-full pl-7 pr-4 py-2.5 border border-gray-200 rounded-xl focus:border-[var(--brand)] focus:outline-none"
                   min={1}
                 />
               </div>
@@ -112,8 +112,8 @@ export default function ContactRequestModal({ listing, onClose }: Props) {
                 mutate();
               }}
               disabled={isPending}
-              className="w-full py-3 rounded-xl text-white font-bold text-base transition-opacity disabled:opacity-60"
-              style={{ backgroundColor: 'var(--ry-orange)' }}
+              className="w-full py-3 rounded-full text-white font-bold text-base transition-opacity disabled:opacity-60"
+              style={{ backgroundColor: 'var(--brand)' }}
             >
               {isPending ? 'Sending...' : 'Request Contact'}
             </button>
@@ -133,8 +133,8 @@ export default function ContactRequestModal({ listing, onClose }: Props) {
             </div>
             <button
               onClick={() => { onClose(); router.push('/profile'); }}
-              className="w-full py-3 rounded-xl text-white font-bold"
-              style={{ backgroundColor: 'var(--ry-orange)' }}
+              className="w-full py-3 rounded-full text-white font-bold"
+              style={{ backgroundColor: 'var(--brand)' }}
             >
               Go to Profile →
             </button>
@@ -154,7 +154,7 @@ export default function ContactRequestModal({ listing, onClose }: Props) {
               <h3 className="text-xl font-black text-gray-900">Request Sent!</h3>
               <p className="text-gray-500 text-sm mt-1">
                 The seller has been notified of your offer of {formatPrice(Number(askingPrice))}. Check{' '}
-                <a href="/sell/my-requests" className="font-semibold" style={{ color: 'var(--ry-orange)' }}>My Requests</a>{' '}
+                <a href="/sell/my-requests" className="font-semibold" style={{ color: 'var(--brand)' }}>My Requests</a>{' '}
                 to see if they approve.
               </p>
             </div>

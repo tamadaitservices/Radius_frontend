@@ -48,7 +48,7 @@ export default function ReservationsPage() {
     enabled: !!user,
   });
 
-  if (isLoading) return <div className="flex items-center justify-center py-20"><Loader2 className="animate-spin text-green-600" size={40} /></div>;
+  if (isLoading) return <div className="flex items-center justify-center py-20"><Loader2 className="animate-spin text-[var(--brand)]" size={40} /></div>;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
@@ -59,7 +59,7 @@ export default function ReservationsPage() {
           <div className="text-5xl mb-4">🔒</div>
           <h2 className="text-xl font-bold text-gray-900 mb-2">No reservations yet</h2>
           <p className="text-gray-500 mb-4">Find a product, call the shop to confirm availability, then reserve.</p>
-          <button onClick={() => router.push('/')} className="px-6 py-2 rounded-lg text-white font-semibold" style={{ backgroundColor: 'var(--ry-green)' }}>
+          <button onClick={() => router.push('/')} className="px-6 py-2 rounded-full text-white font-semibold" style={{ backgroundColor: 'var(--brand)' }}>
             Start Shopping
           </button>
         </div>
@@ -91,9 +91,9 @@ export default function ReservationsPage() {
                 </div>
 
                 {res.status === 'ACCEPTED' && res.pin && (
-                  <div className="mt-3 flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ background: 'var(--ry-green-light)', border: '1px solid rgba(12,131,31,0.15)' }}>
-                    <span className="text-xs font-medium" style={{ color: 'var(--ry-green)' }}>Show this PIN to the vendor:</span>
-                    <span className="text-xl font-black tracking-[0.3em] ml-auto" style={{ color: 'var(--ry-green)' }}>{res.pin}</span>
+                  <div className="mt-3 flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ background: 'var(--brand-light)', border: '1px solid rgba(12,131,31,0.15)' }}>
+                    <span className="text-xs font-medium" style={{ color: 'var(--brand)' }}>Show this PIN to the vendor:</span>
+                    <span className="text-xl font-black tracking-[0.3em] ml-auto" style={{ color: 'var(--brand)' }}>{res.pin}</span>
                   </div>
                 )}
 
@@ -101,7 +101,7 @@ export default function ReservationsPage() {
                   <a
                     href={`tel:${res.shop.phone}`}
                     className="mt-2 flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-bold border"
-                    style={{ borderColor: 'var(--ry-green)', color: 'var(--ry-green)', background: 'var(--ry-green-light)' }}
+                    style={{ borderColor: 'var(--brand)', color: 'var(--brand)', background: 'var(--brand-light)' }}
                   >
                     <Phone size={14} />
                     Call Shop
@@ -112,8 +112,8 @@ export default function ReservationsPage() {
                     href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(res.shop?.address || '')}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-2 flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-white text-sm font-bold"
-                    style={{ backgroundColor: 'var(--ry-green)' }}
+                    className="mt-2 flex items-center justify-center gap-2 w-full py-2.5 rounded-full text-white text-sm font-bold"
+                    style={{ backgroundColor: 'var(--brand)' }}
                   >
                     <MapPin size={14} />
                     Get Directions Now

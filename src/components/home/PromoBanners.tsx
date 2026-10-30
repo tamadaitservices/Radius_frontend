@@ -24,7 +24,7 @@ const FALLBACK_BANNERS: Banner[] = [
     ctaText: 'Search Now',
     ctaLink: '/search',
     imageUrl: null,
-    gradient: 'from-green-700 to-emerald-600',
+    gradient: 'from-[#ff6a1a] to-[#ff9a5c]',
   },
   {
     id: 'f2',
@@ -33,7 +33,7 @@ const FALLBACK_BANNERS: Banner[] = [
     ctaText: 'Browse Shops',
     ctaLink: '/search',
     imageUrl: null,
-    gradient: 'from-purple-700 to-orange-500',
+    gradient: 'from-[#0f1b3d] to-[#2b3f7a]',
   },
   {
     id: 'f3',
@@ -42,7 +42,7 @@ const FALLBACK_BANNERS: Banner[] = [
     ctaText: 'List Your Shop',
     ctaLink: '/vendor/register',
     imageUrl: null,
-    gradient: 'from-slate-800 to-green-700',
+    gradient: 'from-[#e23744] to-[#ff7a85]',
   },
   {
     id: 'f4',
@@ -51,7 +51,7 @@ const FALLBACK_BANNERS: Banner[] = [
     ctaText: 'How It Works',
     ctaLink: '/#how-it-works',
     imageUrl: null,
-    gradient: 'from-blue-700 to-teal-600',
+    gradient: 'from-[#3478f6] to-[#6aa0ff]',
   },
 ];
 
@@ -134,7 +134,7 @@ export default function PromoBanners() {
     <section>
       <div
         className="relative overflow-hidden"
-        style={{ height: '160px' }}
+        style={{ height: '176px' }}
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
         onTouchStart={handleTouchStart}
@@ -159,7 +159,7 @@ export default function PromoBanners() {
             >
             <Link
               href={b.ctaLink}
-              className={`relative block h-full rounded-2xl overflow-hidden ${!b.imageUrl ? `bg-gradient-to-br ${b.gradient}` : ''}`}
+              className={`relative block h-full rounded-[28px] overflow-hidden shadow-[var(--shadow-card)] ${!b.imageUrl ? `bg-gradient-to-br ${b.gradient}` : ''}`}
             >
               {b.imageUrl ? (
                 <Image src={b.imageUrl} alt={b.title} fill className="object-cover" sizes="600px" />
@@ -172,7 +172,7 @@ export default function PromoBanners() {
                     {b.subtitle && <p className="text-white/80 text-xs mt-1 leading-snug">{b.subtitle}</p>}
                   </div>
                   <div className="relative z-10">
-                    <span className="inline-block bg-white text-gray-900 text-[11px] font-bold px-3 py-1 rounded-md">
+                    <span className="inline-block text-[11px] font-bold px-3.5 py-1.5 rounded-full" style={{ background: '#ffffff', color: '#0f1b3d' }}>
                       {b.ctaText}
                     </span>
                   </div>

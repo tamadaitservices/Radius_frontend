@@ -93,7 +93,7 @@ export default function ReservationModal({ shopId, product, onClose }: Props) {
                   type="number"
                   value={agreedPrice}
                   onChange={(e) => setAgreedPrice(e.target.value)}
-                  className="w-full pl-7 pr-4 py-2.5 border border-gray-200 rounded-xl focus:border-green-600 focus:outline-none"
+                  className="w-full pl-7 pr-4 py-2.5 border border-gray-200 rounded-xl focus:border-[var(--brand)] focus:outline-none"
                   min={1}
                 />
               </div>
@@ -114,8 +114,8 @@ export default function ReservationModal({ shopId, product, onClose }: Props) {
                 mutate();
               }}
               disabled={isPending}
-              className="w-full py-3 rounded-xl text-white font-bold text-base transition-opacity disabled:opacity-60"
-              style={{ backgroundColor: 'var(--ry-orange)' }}
+              className="w-full py-3 rounded-full text-white font-bold text-base transition-opacity disabled:opacity-60"
+              style={{ backgroundColor: 'var(--brand)' }}
             >
               {isPending ? 'Reserving...' : 'Confirm Reservation'}
             </button>
@@ -135,8 +135,8 @@ export default function ReservationModal({ shopId, product, onClose }: Props) {
             </div>
             <button
               onClick={() => { onClose(); router.push('/profile'); }}
-              className="w-full py-3 rounded-xl text-white font-bold"
-              style={{ backgroundColor: 'var(--ry-orange)' }}
+              className="w-full py-3 rounded-full text-white font-bold"
+              style={{ backgroundColor: 'var(--brand)' }}
             >
               Go to Profile →
             </button>
@@ -176,8 +176,8 @@ export default function ReservationModal({ shopId, product, onClose }: Props) {
               href={`https://www.google.com/maps/dir/?api=1&destination=${shopId}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold text-white"
-              style={{ backgroundColor: 'var(--ry-green)' }}
+              className="flex items-center justify-center gap-2 w-full py-3 rounded-full font-bold text-white"
+              style={{ backgroundColor: 'var(--brand)' }}
             >
               Get Directions
             </a>

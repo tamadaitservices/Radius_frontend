@@ -25,7 +25,7 @@ export default function PlaceBrowse({ type }: Props) {
   const icons = type === 'FOOD' ? FOOD_CATEGORY_ICONS : PLACE_CATEGORY_ICONS;
   const labels = type === 'FOOD' ? FOOD_CATEGORY_LABELS : PLACE_CATEGORY_LABELS;
   const categories = Object.keys(labels);
-  const accent = type === 'FOOD' ? 'var(--ry-red)' : 'var(--ry-blue)';
+  const accent = 'var(--brand)';
   const Icon = type === 'FOOD' ? UtensilsCrossed : Landmark;
   const title = type === 'FOOD' ? 'Food' : 'Places';
   const subtitle = type === 'FOOD'
@@ -47,11 +47,11 @@ export default function PlaceBrowse({ type }: Props) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-black text-gray-900 flex items-center gap-2">
-          <Icon size={22} style={{ color: accent }} />
+        <h1 className="text-2xl font-black flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
+          <Icon size={22} style={{ color: 'var(--brand-ink)' }} />
           {title}
         </h1>
-        <p className="text-sm text-gray-500 mt-0.5">{subtitle}</p>
+        <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>{subtitle}</p>
       </div>
 
       <RadiusMapControl />
@@ -60,8 +60,8 @@ export default function PlaceBrowse({ type }: Props) {
       <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
         <button
           onClick={() => setCategory(null)}
-          className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border ${!category ? 'text-white' : 'text-gray-600 border-gray-200'}`}
-          style={!category ? { backgroundColor: accent, borderColor: accent } : {}}
+          className="flex-shrink-0 px-4 py-2 rounded-full text-xs font-semibold border transition-colors"
+          style={!category ? { backgroundColor: accent, borderColor: accent, color: 'var(--on-brand)' } : { background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}
         >
           All
         </button>
@@ -69,8 +69,8 @@ export default function PlaceBrowse({ type }: Props) {
           <button
             key={c}
             onClick={() => setCategory(c === category ? null : c)}
-            className={`flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold border ${category === c ? 'text-white' : 'text-gray-600 border-gray-200'}`}
-            style={category === c ? { backgroundColor: accent, borderColor: accent } : {}}
+            className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold border transition-colors"
+            style={category === c ? { backgroundColor: accent, borderColor: accent, color: 'var(--on-brand)' } : { background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}
           >
             <span>{icons[c]}</span>
             {labels[c]}
@@ -84,18 +84,18 @@ export default function PlaceBrowse({ type }: Props) {
         </div>
       ) : data?.length ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {data.map((place: any) => (
-            <PlaceCard key={place.id} place={place} />
+          {data.map((place: any, i: number) => (
+            <PlaceCard key={place.id} place={place} index={i} />
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center gap-3 py-16 rounded-2xl border border-gray-100 bg-white">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gray-50">
-            <Icon size={26} className="text-gray-400" />
+        <div className="ry-card flex flex-col items-center justify-center gap-3 py-16">
+          <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: 'var(--brand-light)' }}>
+            <Icon size={26} style={{ color: 'var(--brand-ink)' }} />
           </div>
           <div className="text-center">
-            <p className="font-semibold text-sm text-gray-800">{emptyText}</p>
-            <p className="text-xs mt-1 text-gray-500">Try widening your search radius above.</p>
+            <p className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>{emptyText}</p>
+            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Try widening your search radius above.</p>
           </div>
         </div>
       )}

@@ -2,9 +2,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
-import Link from 'next/link';
-import Image from 'next/image';
-import { Tag, Store, Package } from 'lucide-react';
+import { Sparkles, Package } from 'lucide-react';
+import GlassCard, { Pill } from '@/components/ui/GlassCard';
 import { useLocation } from '@/hooks/useLocation';
 
 interface FeaturedProduct {
@@ -47,72 +46,32 @@ export default function FeaturedProducts() {
   return (
     <section>
       <div className="flex items-center gap-2 mb-4">
-        <Tag size={20} style={{ color: 'var(--ry-orange)' }} />
-        <h2 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>Featured Products</h2>
+        <Sparkles size={22} style={{ color: 'var(--star)' }} />
+        <h2 className="text-xl font-extrabold" style={{ color: 'var(--foreground)' }}>Featured Products</h2>
       </div>
 
       {data && data.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {data.map((product) => {
+          {data.map((product, i) => {
             const pct = discount(product);
             return (
-              <Link
+              <GlassCard
                 key={product.id}
                 href={`/product/${product.id}`}
-                className="group rounded-xl overflow-hidden border transition-shadow hover:shadow-md"
-                style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
-              >
-                <div className="relative w-full aspect-square overflow-hidden" style={{ background: 'var(--input-bg)' }}>
-                  {product.image ? (
-                    <Image
-                      src={product.image}
-                      alt={product.name}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center w-full h-full text-4xl select-none opacity-30">📦</div>
-                  )}
-                  {pct && (
-                    <span
-                      className="absolute top-2 left-2 text-xs font-bold px-1.5 py-0.5 rounded text-white"
-                      style={{ backgroundColor: 'var(--ry-orange)' }}
-                    >
-                      -{pct}%
-                    </span>
-                  )}
-                </div>
-
-                <div className="p-3 space-y-1">
-                  <p className="text-sm font-semibold leading-tight line-clamp-2" style={{ color: 'var(--foreground)' }}>
-                    {product.name}
-                  </p>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-sm font-bold" style={{ color: 'var(--ry-green)' }}>
-                      ₹{product.price.toLocaleString('en-IN')}
-                    </span>
-                    {product.mrp && product.mrp > product.price && (
-                      <span className="text-xs line-through" style={{ color: 'var(--text-subtle)' }}>
-                        ₹{product.mrp.toLocaleString('en-IN')}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Store size={11} style={{ color: 'var(--text-muted)' }} />
-                    <span className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
-                      {product.shop.name}
-                    </span>
-                  </div>
-                </div>
-              </Link>
+                image={product.image}
+                fallbackEmoji="📦"
+                title={product.name}
+                subtitle={product.shop.name}
+                price={`₹${product.price.toLocaleString('en-IN')}`}
+                badge={pct ? <Pill tone="brand">-{pct}%</Pill> : undefined}
+                tint={i + 1}
+              />
             );
           })}
         </div>
       ) : (
         <div
-          className="flex flex-col items-center justify-center gap-3 py-12 rounded-2xl border"
-          style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
+          className="ry-card flex flex-col items-center justify-center gap-3 py-12"
         >
           <div
             className="w-14 h-14 rounded-2xl flex items-center justify-center"

@@ -31,7 +31,7 @@ export default class ErrorBoundary extends Component<Props, State> {
           <button
             onClick={() => { this.setState({ hasError: false, message: '' }); window.location.reload(); }}
             className="px-6 py-2.5 rounded-xl text-white font-bold text-sm"
-            style={{ backgroundColor: 'var(--ry-green)' }}
+            style={{ backgroundColor: 'var(--brand)' }}
           >
             Refresh Page
           </button>

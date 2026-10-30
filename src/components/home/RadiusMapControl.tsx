@@ -146,7 +146,7 @@ export default function RadiusMapControl() {
           width: 16px;
           height: 16px;
           border-radius: 50%;
-          background: var(--ry-green);
+          background: var(--brand);
           cursor: pointer;
           border: 2px solid #fff;
           box-shadow: 0 1px 3px rgba(0,0,0,0.3);
@@ -155,7 +155,7 @@ export default function RadiusMapControl() {
           width: 16px;
           height: 16px;
           border-radius: 50%;
-          background: var(--ry-green);
+          background: var(--brand);
           cursor: pointer;
           border: 2px solid #fff;
           box-shadow: 0 1px 3px rgba(0,0,0,0.3);

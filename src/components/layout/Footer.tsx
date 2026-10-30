@@ -31,7 +31,7 @@ export default function Footer() {
             <Link href="/" className="inline-block mb-4">
               <span className="text-2xl font-black tracking-tight">
                 <span style={{ color: 'var(--footer-heading)' }}>Radiu</span>
-                <span style={{ color: 'var(--ry-green)' }}>Yes</span>
+                <span style={{ color: 'var(--m-shops)' }}>Yes</span>
               </span>
             </Link>
             <p className="text-sm leading-relaxed mb-6" style={{ color: 'var(--footer-text-muted)' }}>
@@ -39,11 +39,11 @@ export default function Footer() {
             </p>
             <div className="space-y-2 text-sm" style={{ color: 'var(--footer-text-muted)' }}>
               <div className="flex items-center gap-2">
-                <MapPin size={14} style={{ color: 'var(--ry-green)', flexShrink: 0 }} />
+                <MapPin size={14} style={{ color: 'var(--brand)', flexShrink: 0 }} />
                 <span>Vijayawada, Andhra Pradesh</span>
               </div>
               <div className="flex items-center gap-2">
-                <Mail size={14} style={{ color: 'var(--ry-green)', flexShrink: 0 }} />
+                <Mail size={14} style={{ color: 'var(--brand)', flexShrink: 0 }} />
                 <a href="mailto:hello@radiuyes.com" className="hover:underline">hello@radiuyes.com</a>
               </div>
             </div>
@@ -122,7 +122,7 @@ export default function Footer() {
             © {new Date().getFullYear()} GenieHost Private Limited. All rights reserved.
           </p>
           <p className="text-xs" style={{ color: 'var(--footer-text-muted)' }}>
-            Made with <span style={{ color: 'var(--ry-green)' }}>♥</span> in Vijayawada
+            Made with <span style={{ color: 'var(--brand)' }}>♥</span> in Vijayawada
           </p>
         </div>
       </div>

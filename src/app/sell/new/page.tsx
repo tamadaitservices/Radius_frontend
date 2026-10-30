@@ -80,7 +80,7 @@ export default function NewListingPage() {
             </div>
           ))}
           {images.length < 8 && (
-            <label className="relative aspect-square rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-orange-400 transition-colors">
+            <label className="relative aspect-square rounded-2xl border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-[var(--brand)] transition-colors">
               {uploading ? (
                 <Loader2 size={20} className="animate-spin text-gray-400" />
               ) : (
@@ -103,8 +103,8 @@ export default function NewListingPage() {
 
         <button
           onClick={() => router.push('/sell/my-listings')}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-white font-bold text-sm"
-          style={{ backgroundColor: 'var(--ry-green)' }}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-full text-white font-bold text-sm"
+          style={{ backgroundColor: 'var(--brand)' }}
         >
           <Check size={16} /> Done
         </button>
@@ -118,30 +118,30 @@ export default function NewListingPage() {
       <p className="text-sm text-gray-500 mb-5">You can post 1 listing every 7 days.</p>
 
       <div className="space-y-3">
-        <input value={form.title} onChange={set('title')} placeholder="What are you selling? *" className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:border-orange-500 focus:outline-none" />
-        <textarea value={form.description} onChange={set('description')} placeholder="Description (optional)" rows={3} className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:border-orange-500 focus:outline-none resize-none" />
+        <input value={form.title} onChange={set('title')} placeholder="What are you selling? *" className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-2xl text-sm focus:border-[var(--brand)] focus:outline-none" />
+        <textarea value={form.description} onChange={set('description')} placeholder="Description (optional)" rows={3} className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-2xl text-sm focus:border-[var(--brand)] focus:outline-none resize-none" />
 
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
-          <input type="number" value={form.price} onChange={set('price')} placeholder="Price *" className="w-full pl-7 pr-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:border-orange-500 focus:outline-none" />
+          <input type="number" value={form.price} onChange={set('price')} placeholder="Price *" className="w-full pl-7 pr-3 py-2.5 border-2 border-gray-200 rounded-2xl text-sm focus:border-[var(--brand)] focus:outline-none" />
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <select value={form.category} onChange={set('category')} className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:border-orange-500 focus:outline-none">
+          <select value={form.category} onChange={set('category')} className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-2xl text-sm focus:border-[var(--brand)] focus:outline-none">
             {CATEGORIES.map((c) => <option key={c} value={c}>{LISTING_CATEGORY_LABELS[c]}</option>)}
           </select>
-          <select value={form.condition} onChange={set('condition')} className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:border-orange-500 focus:outline-none">
+          <select value={form.condition} onChange={set('condition')} className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-2xl text-sm focus:border-[var(--brand)] focus:outline-none">
             {CONDITIONS.map((c) => <option key={c} value={c}>{LISTING_CONDITION_LABELS[c]}</option>)}
           </select>
         </div>
 
-        <input value={form.area} onChange={set('area')} placeholder="Area / neighbourhood *" className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:border-orange-500 focus:outline-none" />
+        <input value={form.area} onChange={set('area')} placeholder="Area / neighbourhood *" className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-2xl text-sm focus:border-[var(--brand)] focus:outline-none" />
 
         <button
           onClick={() => create.mutate()}
           disabled={!valid || create.isPending}
-          className="w-full py-3 rounded-xl text-white font-bold text-sm disabled:opacity-50"
-          style={{ backgroundColor: 'var(--ry-orange)' }}
+          className="w-full py-3 rounded-full text-white font-bold text-sm disabled:opacity-50"
+          style={{ backgroundColor: 'var(--brand)' }}
         >
           {create.isPending ? 'Posting...' : 'Post Listing'}
         </button>

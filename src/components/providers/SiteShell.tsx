@@ -27,7 +27,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-gray-50 pt-32">{children}</main>
+      <main className="ry-page min-h-screen pt-[124px]">{children}</main>
       <Footer />
     </>
   );

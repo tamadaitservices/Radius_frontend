@@ -29,7 +29,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="animate-spin text-orange-500" size={40} />
+        <Loader2 className="animate-spin text-[var(--brand)]" size={40} />
       </div>
     );
   }
@@ -50,7 +50,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
 
       <div className="grid md:grid-cols-2 gap-4">
         {/* Images */}
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        <div className="ry-card overflow-hidden">
           <div className="relative aspect-square bg-gray-50">
             {images.length > 0 ? (
               <Image src={images[activeImage]} alt={listing.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" priority />
@@ -73,7 +73,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                 <button
                   key={src}
                   onClick={() => setActiveImage(i)}
-                  className={`relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 border-2 ${i === activeImage ? 'border-orange-500' : 'border-transparent'}`}
+                  className={`relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 border-2 ${i === activeImage ? 'border-[var(--brand)]' : 'border-transparent'}`}
                 >
                   <Image src={src} alt="" fill className="object-cover" sizes="56px" />
                 </button>
@@ -84,7 +84,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
 
         {/* Info */}
         <div className="flex flex-col gap-4">
-          <div className="bg-white rounded-2xl border border-gray-100 p-5">
+          <div className="ry-card p-5">
             <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-gray-100 text-gray-600">
               {LISTING_CONDITION_LABELS[listing.condition] || listing.condition}
             </span>
@@ -109,8 +109,8 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                   if ((user as any).type === 'vendor') { toast.error('Vendor accounts cannot contact sellers.'); return; }
                   setRequestingContact(true);
                 }}
-                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-white text-base mt-5"
-                style={{ backgroundColor: 'var(--ry-orange)' }}
+                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-full font-bold text-white text-base mt-5"
+                style={{ backgroundColor: 'var(--brand)' }}
               >
                 <Phone size={18} />
                 Request Contact
@@ -122,7 +122,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
           </div>
 
           {/* Seller info */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-5">
+          <div className="ry-card p-5">
             <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-3">Seller</h2>
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center flex-shrink-0">
