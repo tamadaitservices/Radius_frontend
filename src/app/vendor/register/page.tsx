@@ -8,6 +8,8 @@ import toast from 'react-hot-toast';
 import { Store, Phone, User, Lock, Eye, EyeOff, Mail } from 'lucide-react';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
+import FieldError, { fieldBorder } from '@/components/vendor/FieldError';
+import { requiredText, mobileError, emailError, passwordError, visibleError, firstProblem } from '@/lib/validators';
 
 export default function VendorRegisterPage() {
   const router = useRouter();
@@ -47,13 +49,25 @@ export default function VendorRegisterPage() {
     onError: (err: any) => toast.error(err.response?.data?.error || 'Registration failed.'),
   });
 
-  const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email);
-  const valid =
-    /^[6-9]\d{9}$/.test(form.phone) &&
-    validEmail &&
-    form.name.length >= 2 &&
-    form.shopName.length >= 2 &&
-    form.password.length >= 8;
+  const [submitted, setSubmitted] = useState(false);
+  const errors = {
+    phone: mobileError(form.phone),
+    email: emailError(form.email),
+    name: requiredText(form.name, 'Your name', { min: 2, max: 100 }),
+    shopName: requiredText(form.shopName, 'Shop name', { min: 2, max: 200 }),
+    password: passwordError(form.password),
+  };
+  const shown = (key: keyof typeof errors) => visibleError(errors[key], form[key], submitted);
+
+  const submit = () => {
+    setSubmitted(true);
+    const problem = firstProblem(Object.values(errors));
+    if (problem) {
+      toast.error(problem.more ? `${problem.message} (${problem.more} more to fix — see the red fields)` : problem.message, { duration: 6000 });
+      return;
+    }
+    register.mutate();
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-10">
@@ -76,9 +90,10 @@ export default function VendorRegisterPage() {
                 value={form.phone}
                 onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value.replace(/\D/g, '').slice(0, 10) }))}
                 placeholder="9876543210"
-                className="w-full pl-9 pr-4 py-2.5 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:outline-none text-sm"
+                className={`w-full pl-9 pr-4 py-2.5 border-2 ${fieldBorder(shown('phone'))} rounded-xl focus:outline-none text-sm`}
               />
             </div>
+            <FieldError message={shown('phone')} />
           </div>
 
           <div>
@@ -92,9 +107,10 @@ export default function VendorRegisterPage() {
                 value={form.email}
                 onChange={set('email')}
                 placeholder="you@example.com"
-                className="w-full pl-9 pr-4 py-2.5 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:outline-none text-sm"
+                className={`w-full pl-9 pr-4 py-2.5 border-2 ${fieldBorder(shown('email'))} rounded-xl focus:outline-none text-sm`}
               />
             </div>
+            <FieldError message={shown('email')} />
             <p className="text-xs text-gray-400 mt-1">Used for OTP login and important notifications.</p>
           </div>
 
@@ -107,9 +123,10 @@ export default function VendorRegisterPage() {
                 value={form.name}
                 onChange={set('name')}
                 placeholder="Raju Sharma"
-                className="w-full pl-9 pr-4 py-2.5 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:outline-none text-sm"
+                className={`w-full pl-9 pr-4 py-2.5 border-2 ${fieldBorder(shown('name'))} rounded-xl focus:outline-none text-sm`}
               />
             </div>
+            <FieldError message={shown('name')} />
           </div>
 
           <div>
@@ -121,9 +138,10 @@ export default function VendorRegisterPage() {
                 value={form.shopName}
                 onChange={set('shopName')}
                 placeholder="Raju Electronics"
-                className="w-full pl-9 pr-4 py-2.5 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:outline-none text-sm"
+                className={`w-full pl-9 pr-4 py-2.5 border-2 ${fieldBorder(shown('shopName'))} rounded-xl focus:outline-none text-sm`}
               />
             </div>
+            <FieldError message={shown('shopName')} />
           </div>
 
           <div>
@@ -135,7 +153,7 @@ export default function VendorRegisterPage() {
                 value={form.password}
                 onChange={set('password')}
                 placeholder="Min 8 characters"
-                className="w-full pl-9 pr-10 py-2.5 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:outline-none text-sm"
+                className={`w-full pl-9 pr-10 py-2.5 border-2 ${fieldBorder(shown('password'))} rounded-xl focus:outline-none text-sm`}
               />
               <button
                 type="button"
@@ -145,12 +163,13 @@ export default function VendorRegisterPage() {
                 {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
             </div>
+            <FieldError message={shown('password')} />
             <p className="text-xs text-gray-400 mt-1">Backup login method if OTP email is unavailable.</p>
           </div>
 
           <button
-            onClick={() => register.mutate()}
-            disabled={!valid || register.isPending}
+            onClick={submit}
+            disabled={register.isPending}
             className="w-full py-3 rounded-xl text-white font-bold text-base disabled:opacity-50 transition-opacity mt-2"
             style={{ backgroundColor: 'var(--ry-green)' }}
           >

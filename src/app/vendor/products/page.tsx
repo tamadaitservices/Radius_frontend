@@ -12,6 +12,8 @@ import { useVendorGuard } from '@/hooks/useVendorGuard';
 import { useCategories } from '@/hooks/useCategories';
 import { cropImage } from '@/lib/cropImage';
 import { specHint } from '@/lib/imageSpecs';
+import FieldError, { fieldBorder } from '@/components/vendor/FieldError';
+import { requiredText, amountError, mrpError, visibleError, firstProblem } from '@/lib/validators';
 
 interface Product {
   id: string;
@@ -44,7 +46,7 @@ function ProductPhotoGallery({ productId, images, onChange }: { productId: strin
       return r.data as { images: string[] };
     },
     onSuccess: (data) => onChange(data.images),
-    onError: (err: any) => toast.error(err.response?.data?.error || 'Upload failed.'),
+    onError: (err: any) => toast.error(err.response?.data?.error || 'Upload failed. Check your connection and try again.', { duration: 6000 }),
     onSettled: () => setBusy(false),
   });
 
@@ -146,25 +148,54 @@ function ProductForm({
       toast.success(initial ? 'Product updated.' : 'Product added — now add at least one photo.');
       setSavedProduct(product);
     },
-    onError: (err: any) => toast.error(err.response?.data?.error || 'Failed.'),
+    onError: (err: any) => toast.error(err.response?.data?.error || 'Could not save the product. Check your connection and try again.'),
   });
 
   const photoCount = savedProduct?.images?.length ?? 0;
   const canFinish = photoCount >= MIN_PRODUCT_PHOTOS;
 
+  const [submitted, setSubmitted] = useState(false);
+  const errors = {
+    name: requiredText(form.name, 'Product name', { max: 200 }),
+    price: amountError(form.price),
+    mrp: mrpError(form.mrp, form.price),
+    description: form.description.trim().length > 500 ? `Description can be at most 500 characters (${form.description.trim().length} entered)` : null,
+  };
+  const shown = (key: keyof typeof errors, value: string) => visibleError(errors[key], value, submitted);
+
+  const submit = () => {
+    setSubmitted(true);
+    const problem = firstProblem(Object.values(errors));
+    if (problem) {
+      toast.error(problem.more ? `${problem.message} (${problem.more} more to fix — see the red fields)` : problem.message, { duration: 6000 });
+      return;
+    }
+    save.mutate();
+  };
+
   return (
     <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200 space-y-3">
       <h3 className="font-bold text-gray-900">{initial ? 'Edit Product' : 'Add New Product'}</h3>
-      <input value={form.name} onChange={set('name')} placeholder="Product name *" className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl text-sm focus:border-green-600 focus:outline-none" />
-      <textarea value={form.description} onChange={set('description')} placeholder="Description (optional)" rows={2} className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl text-sm focus:border-green-600 focus:outline-none resize-none" />
+      <div>
+        <input value={form.name} onChange={set('name')} placeholder="Product name *" className={`w-full px-3 py-2 border-2 ${fieldBorder(shown('name', form.name))} rounded-xl text-sm focus:outline-none`} />
+        <FieldError message={shown('name', form.name)} />
+      </div>
+      <textarea value={form.description} onChange={set('description')} placeholder="Description (optional)" rows={2} className={`w-full px-3 py-2 border-2 ${fieldBorder(errors.description)} rounded-xl text-sm focus:outline-none resize-none`} />
+      <FieldError message={errors.description} />
       <div className="grid grid-cols-2 gap-2">
-        <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
-          <input type="number" value={form.price} onChange={set('price')} placeholder="Price *" className="w-full pl-7 pr-3 py-2 border-2 border-gray-200 rounded-xl text-sm focus:border-green-600 focus:outline-none" />
+        <div>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
+            <input type="number" value={form.price} onChange={set('price')} placeholder="Price *" className={`w-full pl-7 pr-3 py-2 border-2 ${fieldBorder(shown('price', form.price))} rounded-xl text-sm focus:outline-none`} />
+          </div>
+          <FieldError message={shown('price', form.price)} />
         </div>
-        <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
-          <input type="number" value={form.mrp} onChange={set('mrp')} placeholder="MRP (strike-off)" className="w-full pl-7 pr-3 py-2 border-2 border-gray-200 rounded-xl text-sm focus:border-green-600 focus:outline-none" />
+        <div>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
+            <input type="number" value={form.mrp} onChange={set('mrp')} placeholder="MRP (strike-off)" className={`w-full pl-7 pr-3 py-2 border-2 ${fieldBorder(errors.mrp)} rounded-xl text-sm focus:outline-none`} />
+          </div>
+          <FieldError message={errors.mrp} />
         </div>
       </div>
       <input value={form.tags} onChange={set('tags')} placeholder="Tags: mobile, samsung, charger" className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl text-sm focus:border-green-600 focus:outline-none" />
@@ -186,7 +217,7 @@ function ProductForm({
 
       {!savedProduct ? (
         <div className="flex gap-2">
-          <button onClick={() => save.mutate()} disabled={!form.name || !form.price || save.isPending} className="flex-1 py-2 rounded-xl text-white font-bold text-sm disabled:opacity-50" style={{ backgroundColor: 'var(--ry-green)' }}>
+          <button onClick={submit} disabled={save.isPending} className="flex-1 py-2 rounded-xl text-white font-bold text-sm disabled:opacity-50" style={{ backgroundColor: 'var(--ry-green)' }}>
             {save.isPending ? 'Saving...' : 'Save & Add Photos'}
           </button>
           <button onClick={onDone} className="px-4 py-2 rounded-xl border-2 border-gray-200 text-sm font-semibold text-gray-600">Cancel</button>
@@ -202,14 +233,18 @@ function ProductForm({
             }}
           />
           <div className="flex gap-2">
-            <button onClick={() => save.mutate()} disabled={!form.name || !form.price || save.isPending} className="flex-1 py-2 rounded-xl border-2 border-gray-200 text-sm font-semibold text-gray-600 disabled:opacity-50">
+            <button onClick={submit} disabled={save.isPending} className="flex-1 py-2 rounded-xl border-2 border-gray-200 text-sm font-semibold text-gray-600 disabled:opacity-50">
               {save.isPending ? 'Saving...' : 'Save Details'}
             </button>
             <button
-              onClick={onDone}
-              disabled={!canFinish}
-              title={!canFinish ? 'Add at least 1 photo first' : undefined}
-              className="flex-1 py-2 rounded-xl text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => {
+                if (!canFinish) {
+                  toast.error(`Add at least ${MIN_PRODUCT_PHOTOS} photo — customers can only see products that have a picture.`);
+                  return;
+                }
+                onDone();
+              }}
+              className="flex-1 py-2 rounded-xl text-white font-bold text-sm"
               style={{ backgroundColor: 'var(--ry-green)' }}
             >
               Done
@@ -259,7 +294,7 @@ function ProductsContent() {
       qc.invalidateQueries({ queryKey: ['vendor-products', activeShopId] });
       toast.success('Image uploaded.');
     },
-    onError: () => toast.error('Image upload failed.'),
+    onError: (err: any) => toast.error(err.response?.data?.error || 'Image upload failed. Check your connection and try again.', { duration: 6000 }),
   });
 
   const deleteProduct = useMutation({
@@ -291,7 +326,7 @@ function ProductsContent() {
         toast.error(`Imported ${data.created}, ${data.failed} failed. Row ${data.errors[0]?.row}: ${data.errors[0]?.error}`, { duration: 6000 });
       }
     },
-    onError: (err: any) => toast.error(err.response?.data?.error || 'Import failed.'),
+    onError: (err: any) => toast.error(err.response?.data?.error || 'Import failed. Check that the file is a .csv with the header name,description,price,mrp,category,tags.', { duration: 7000 }),
     onSettled: () => setImporting(false),
   });
 

@@ -10,6 +10,10 @@ import api from '@/lib/api';
 import { useCategories } from '@/hooks/useCategories';
 import { cropImage } from '@/lib/cropImage';
 import { specHint } from '@/lib/imageSpecs';
+import FieldError, { fieldBorder } from '@/components/vendor/FieldError';
+import {
+  requiredText, mobileError, coordinatesError, timeError, hoursError, visibleError, firstProblem,
+} from '@/lib/validators';
 
 const AREAS = [
   'Governorpet', 'Suryaraopet', 'Benz Circle', 'Auto Nagar', 'Moghalrajpuram',
@@ -22,6 +26,7 @@ export default function NewShopPage() {
   const { categories: categoryRows, labels: CATEGORY_LABELS } = useCategories();
   const CATEGORIES = categoryRows.map((c) => c.key);
   const [locating, setLocating] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -58,7 +63,7 @@ export default function NewShopPage() {
       },
       () => {
         setLocating(false);
-        toast.error('Could not detect location. Enter coordinates manually.');
+        toast.error('Could not detect your location. Allow location access in the browser, or type the latitude and longitude yourself.', { duration: 6000 });
       }
     );
   };
@@ -89,12 +94,27 @@ export default function NewShopPage() {
     onError: (err: any) => toast.error(err.response?.data?.error || 'Failed to create shop.'),
   });
 
-  const valid =
-    form.name.length >= 2 &&
-    form.address.length >= 5 &&
-    /^[6-9]\d{9}$/.test(form.phone) &&
-    form.latitude !== '' &&
-    form.longitude !== '';
+  const errors = {
+    name: requiredText(form.name, 'Shop name', { min: 2, max: 200 }),
+    description: form.description.trim().length > 500 ? `Description can be at most 500 characters (${form.description.trim().length} entered)` : null,
+    address: requiredText(form.address, 'Address', { min: 5, max: 500 }),
+    location: coordinatesError(form.latitude, form.longitude),
+    phone: mobileError(form.phone, 'Shop phone'),
+    whatsapp: mobileError(form.whatsapp, 'WhatsApp number', false),
+    opening: timeError(form.openingTime, 'Opening time') ?? hoursError(form.openingTime, form.closingTime),
+    closing: timeError(form.closingTime, 'Closing time'),
+  };
+  const shown = (key: keyof typeof errors, value: string) => visibleError(errors[key], value, submitted);
+
+  const submit = () => {
+    setSubmitted(true);
+    const problem = firstProblem(Object.values(errors));
+    if (problem) {
+      toast.error(problem.more ? `${problem.message} (${problem.more} more to fix — see the red fields)` : problem.message, { duration: 6000 });
+      return;
+    }
+    create.mutate();
+  };
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
@@ -107,13 +127,15 @@ export default function NewShopPage() {
         {/* Shop name */}
         <div>
           <label className="text-sm font-semibold text-gray-700 block mb-1">Shop Name *</label>
-          <input value={form.name} onChange={set('name')} placeholder="Raju Electronics" className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:outline-none text-sm" />
+          <input value={form.name} onChange={set('name')} placeholder="Raju Electronics" className={`w-full px-4 py-2.5 border-2 ${fieldBorder(shown('name', form.name))} rounded-xl focus:outline-none text-sm`} />
+          <FieldError message={shown('name', form.name)} />
         </div>
 
         {/* Description */}
         <div>
           <label className="text-sm font-semibold text-gray-700 block mb-1">Description</label>
-          <textarea value={form.description} onChange={set('description')} placeholder="What do you sell? Special offers?" rows={2} className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:outline-none text-sm resize-none" />
+          <textarea value={form.description} onChange={set('description')} placeholder="What do you sell? Special offers?" rows={2} className={`w-full px-4 py-2.5 border-2 ${fieldBorder(errors.description)} rounded-xl focus:outline-none text-sm resize-none`} />
+          <FieldError message={errors.description} />
         </div>
 
         {/* Cover image */}
@@ -155,7 +177,8 @@ export default function NewShopPage() {
         {/* Address */}
         <div>
           <label className="text-sm font-semibold text-gray-700 block mb-1">Full Address *</label>
-          <input value={form.address} onChange={set('address')} placeholder="Shop 12, MG Road, Governorpet" className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:outline-none text-sm" />
+          <input value={form.address} onChange={set('address')} placeholder="Shop 12, MG Road, Governorpet" className={`w-full px-4 py-2.5 border-2 ${fieldBorder(shown('address', form.address))} rounded-xl focus:outline-none text-sm`} />
+          <FieldError message={shown('address', form.address)} />
         </div>
 
         {/* Area + City */}
@@ -187,12 +210,13 @@ export default function NewShopPage() {
           </button>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <input value={form.latitude} onChange={set('latitude')} placeholder="Latitude (e.g. 16.5062)" className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:outline-none text-sm" />
+              <input value={form.latitude} onChange={set('latitude')} placeholder="Latitude (e.g. 16.5062)" className={`w-full px-3 py-2 border-2 ${fieldBorder(shown('location', form.latitude + form.longitude))} rounded-xl focus:outline-none text-sm`} />
             </div>
             <div>
-              <input value={form.longitude} onChange={set('longitude')} placeholder="Longitude (e.g. 80.6480)" className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:outline-none text-sm" />
+              <input value={form.longitude} onChange={set('longitude')} placeholder="Longitude (e.g. 80.6480)" className={`w-full px-3 py-2 border-2 ${fieldBorder(shown('location', form.latitude + form.longitude))} rounded-xl focus:outline-none text-sm`} />
             </div>
           </div>
+          <FieldError message={shown('location', form.latitude + form.longitude)} />
           <p className="text-xs text-gray-400 mt-1">Used to show your shop in nearby search results</p>
         </div>
 
@@ -200,11 +224,13 @@ export default function NewShopPage() {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-sm font-semibold text-gray-700 block mb-1">Shop Phone *</label>
-            <input type="tel" value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value.replace(/\D/g, '').slice(0, 10) }))} placeholder="9876543210" className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:outline-none text-sm" />
+            <input type="tel" value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value.replace(/\D/g, '').slice(0, 10) }))} placeholder="9876543210" className={`w-full px-3 py-2.5 border-2 ${fieldBorder(shown('phone', form.phone))} rounded-xl focus:outline-none text-sm`} />
+            <FieldError message={shown('phone', form.phone)} />
           </div>
           <div>
             <label className="text-sm font-semibold text-gray-700 block mb-1">WhatsApp</label>
-            <input type="tel" value={form.whatsapp} onChange={(e) => setForm((f) => ({ ...f, whatsapp: e.target.value.replace(/\D/g, '').slice(0, 10) }))} placeholder="9876543210" className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:outline-none text-sm" />
+            <input type="tel" value={form.whatsapp} onChange={(e) => setForm((f) => ({ ...f, whatsapp: e.target.value.replace(/\D/g, '').slice(0, 10) }))} placeholder="9876543210" className={`w-full px-3 py-2.5 border-2 ${fieldBorder(errors.whatsapp)} rounded-xl focus:outline-none text-sm`} />
+            <FieldError message={errors.whatsapp} />
           </div>
         </div>
 
@@ -212,17 +238,19 @@ export default function NewShopPage() {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-sm font-semibold text-gray-700 block mb-1">Opening Time</label>
-            <input type="time" value={form.openingTime} onChange={set('openingTime')} className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:outline-none text-sm" />
+            <input type="time" value={form.openingTime} onChange={set('openingTime')} className={`w-full px-3 py-2.5 border-2 ${fieldBorder(errors.opening)} rounded-xl focus:outline-none text-sm`} />
+            <FieldError message={errors.opening} />
           </div>
           <div>
             <label className="text-sm font-semibold text-gray-700 block mb-1">Closing Time</label>
-            <input type="time" value={form.closingTime} onChange={set('closingTime')} className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:outline-none text-sm" />
+            <input type="time" value={form.closingTime} onChange={set('closingTime')} className={`w-full px-3 py-2.5 border-2 ${fieldBorder(errors.closing)} rounded-xl focus:outline-none text-sm`} />
+            <FieldError message={errors.closing} />
           </div>
         </div>
 
         <button
-          onClick={() => create.mutate()}
-          disabled={!valid || create.isPending}
+          onClick={submit}
+          disabled={create.isPending}
           className="w-full py-3 rounded-xl text-white font-bold text-base disabled:opacity-50"
           style={{ backgroundColor: 'var(--ry-green)' }}
         >

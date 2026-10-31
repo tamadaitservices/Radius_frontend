@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import Cropper, { type Area } from 'react-easy-crop';
 import { IMAGE_SPECS, type ImageSpecKey } from '@/lib/imageSpecs';
+import { checkImageOrToast } from '@/lib/imageCheck';
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -84,7 +85,9 @@ function CropDialog({ file, specKey, onDone }: { file: File; specKey: ImageSpecK
  * Opens a crop dialog locked to the aspect ratio the backend stores for `specKey`
  * and resolves with the cropped file (or null if cancelled).
  */
-export function cropImage(file: File, specKey: ImageSpecKey): Promise<File | null> {
+export async function cropImage(file: File, specKey: ImageSpecKey): Promise<File | null> {
+  // Refuse photos that are too small, too heavy or not pictures before showing the crop dialog.
+  if (!(await checkImageOrToast(file, specKey))) return null;
   return new Promise((resolve) => {
     const host = document.createElement('div');
     document.body.appendChild(host);

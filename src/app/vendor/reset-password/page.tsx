@@ -6,6 +6,8 @@ import { useMutation } from '@tanstack/react-query';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Store, Lock, Eye, EyeOff, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import FieldError from '@/components/vendor/FieldError';
+import { passwordError, confirmError, visibleError } from '@/lib/validators';
 import api from '@/lib/api';
 
 function ResetPasswordForm() {
@@ -48,7 +50,13 @@ function ResetPasswordForm() {
     );
   }
 
-  const valid = password.length >= 8 && password === confirm;
+  const passErr = passwordError(password, 'New password');
+  const confirmErr = confirm ? confirmError(confirm, password) : null;
+  const submit = () => {
+    const problem = passErr ?? confirmError(confirm, password);
+    if (problem) { toast.error(problem); return; }
+    reset.mutate();
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
@@ -89,6 +97,7 @@ function ResetPasswordForm() {
                   {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
+              <FieldError message={visibleError(passErr, password, false)} />
             </div>
 
             <div>
@@ -103,17 +112,15 @@ function ResetPasswordForm() {
                   className={`w-full pl-9 pr-4 py-2.5 border-2 rounded-xl focus:outline-none text-sm ${
                     confirm && password !== confirm ? 'border-red-300 focus:border-red-400' : 'border-gray-200 focus:border-green-600'
                   }`}
-                  onKeyDown={(e) => e.key === 'Enter' && valid && reset.mutate()}
+                  onKeyDown={(e) => e.key === 'Enter' && submit()}
                 />
               </div>
-              {confirm && password !== confirm && (
-                <p className="text-xs text-red-500 mt-1">Passwords do not match.</p>
-              )}
+              <FieldError message={confirmErr} />
             </div>
 
             <button
-              onClick={() => reset.mutate()}
-              disabled={!valid || reset.isPending}
+              onClick={submit}
+              disabled={reset.isPending}
               className="w-full py-3 rounded-xl text-white font-bold text-base disabled:opacity-50"
               style={{ backgroundColor: 'var(--ry-green)' }}
             >

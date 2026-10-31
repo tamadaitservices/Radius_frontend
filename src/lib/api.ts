@@ -90,12 +90,14 @@ export function loginErrorMessage(err: any): string {
  * Map an axios error to a human-readable action error message.
  */
 export function actionErrorMessage(err: any, fallback = 'Something went wrong. Please try again.'): string {
-  if (!err.response) return 'Network error. Check your connection.';
+  if (!err.response) return 'Cannot reach the server. Check your internet connection and try again.';
   const status = err.response.status;
   const msg: string = err.response?.data?.error ?? '';
   if (status === 401) return 'Session expired. Please log in again.';
   if (status === 403) return 'You do not have permission to do this.';
   if (status === 404) return 'Item not found — it may have already been deleted.';
+  if (status === 413) return 'That file is too large. The limit is 10 MB — choose a smaller photo.';
+  if (status === 429) return msg || 'Too many requests. Please wait a moment and try again.';
   if (status === 409) return msg || 'Conflict — this item already exists.';
   if (status === 400) return msg || 'Invalid input. Please check your details.';
   if (status >= 500) return 'Server error. Please try again in a moment.';

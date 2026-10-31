@@ -15,7 +15,35 @@ import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useCategories } from '@/hooks/useCategories';
 import { cropImage } from '@/lib/cropImage';
-import { specHint } from '@/lib/imageSpecs';
+import { specHint, uncroppedHint } from '@/lib/imageSpecs';
+import { checkImageOrToast } from '@/lib/imageCheck';
+import { requiredText, amountError, mrpError, mobileError, timeError, hoursError, firstProblem } from '@/lib/validators';
+
+/** First thing wrong with the shop edit form, in plain words, or null. */
+function shopFormProblem(f: { name: string; description: string; address: string; area: string; phone: string; whatsapp: string; openingTime: string; closingTime: string }): string | null {
+  const p = firstProblem([
+    requiredText(f.name, 'Shop name', { min: 2, max: 200 }),
+    f.description.trim().length > 500 ? `Description can be at most 500 characters (${f.description.trim().length} entered)` : null,
+    requiredText(f.address, 'Address', { min: 5, max: 500 }),
+    requiredText(f.area, 'Area', { min: 2, max: 100 }),
+    mobileError(f.phone, 'Shop phone'),
+    mobileError(f.whatsapp, 'WhatsApp number', false),
+    timeError(f.openingTime, 'Opening time') ?? hoursError(f.openingTime, f.closingTime),
+    timeError(f.closingTime, 'Closing time'),
+  ]);
+  return p ? (p.more ? `${p.message} (${p.more} more to fix)` : p.message) : null;
+}
+
+/** First thing wrong with the product form, in plain words, or null. */
+function productFormProblem(f: { name: string; description: string; price: string; mrp: string }): string | null {
+  const p = firstProblem([
+    requiredText(f.name, 'Product name', { max: 200 }),
+    amountError(f.price),
+    mrpError(f.mrp, f.price),
+    f.description.trim().length > 500 ? `Description can be at most 500 characters (${f.description.trim().length} entered)` : null,
+  ]);
+  return p ? (p.more ? `${p.message} (${p.more} more to fix)` : p.message) : null;
+}
 
 type Section = 'dashboard' | 'shop' | 'products' | 'reservations' | 'reviews' | 'profile';
 
@@ -569,10 +597,11 @@ export default function VendorDashboard() {
                                 <label className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs font-bold cursor-pointer">
                                   <ImagePlus size={13} /> Add Photo
                                   <input type="file" accept="image/*" className="sr-only"
-                                    onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadGalleryImage.mutate(f); e.target.value = ''; }} />
+                                    onChange={(e) => { const f = e.target.files?.[0]; if (f) checkImageOrToast(f, 'gallery').then((ok) => ok && uploadGalleryImage.mutate(f)); e.target.value = ''; }} />
                                 </label>
                               )}
                             </div>
+                            <p className="text-xs text-gray-400 mb-2">{uncroppedHint('gallery')}</p>
                             {shop.images?.length > 0 ? (
                               <div className="grid grid-cols-3 gap-2">
                                 {shop.images.map((url: string, i: number) => (
@@ -598,7 +627,7 @@ export default function VendorDashboard() {
                                     <Pencil size={14} /> Edit
                                   </button>
                                 : <div className="flex gap-2">
-                                    <button onClick={() => updateShop.mutate()} disabled={updateShop.isPending}
+                                    <button onClick={() => { const problem = shopFormProblem(shopForm); if (problem) { toast.error(problem, { duration: 6000 }); return; } updateShop.mutate(); }} disabled={updateShop.isPending}
                                       className="flex items-center gap-1.5 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-bold disabled:opacity-50">
                                       {updateShop.isPending ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Save
                                     </button>
@@ -652,11 +681,11 @@ export default function VendorDashboard() {
                                   </div>
                                   <div>
                                     <label className="text-xs font-semibold text-gray-500 block mb-1">Phone</label>
-                                    <input value={shopForm.phone} onChange={e => setShopForm(f => ({ ...f, phone: e.target.value }))} className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:border-green-600 focus:outline-none text-gray-800" />
+                                    <input type="tel" inputMode="numeric" maxLength={10} value={shopForm.phone} onChange={e => setShopForm(f => ({ ...f, phone: e.target.value.replace(/\D/g, '').slice(0, 10) }))} className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:border-green-600 focus:outline-none text-gray-800" />
                                   </div>
                                   <div>
                                     <label className="text-xs font-semibold text-gray-500 block mb-1">WhatsApp</label>
-                                    <input value={shopForm.whatsapp} onChange={e => setShopForm(f => ({ ...f, whatsapp: e.target.value }))} placeholder="Optional" className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:border-green-600 focus:outline-none text-gray-800" />
+                                    <input type="tel" inputMode="numeric" maxLength={10} value={shopForm.whatsapp} onChange={e => setShopForm(f => ({ ...f, whatsapp: e.target.value.replace(/\D/g, '').slice(0, 10) }))} placeholder="Optional" className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:border-green-600 focus:outline-none text-gray-800" />
                                   </div>
                                   <div>
                                     <label className="text-xs font-semibold text-gray-500 block mb-1">Opening Time</label>
@@ -749,8 +778,12 @@ export default function VendorDashboard() {
                   </div>
                   <div className="flex gap-2 mt-4">
                     <button
-                      onClick={() => editingProduct ? updateProduct.mutate() : createProduct.mutate()}
-                      disabled={!productForm.name || !productForm.price || createProduct.isPending || updateProduct.isPending}
+                      onClick={() => {
+                        const problem = productFormProblem(productForm);
+                        if (problem) { toast.error(problem, { duration: 6000 }); return; }
+                        editingProduct ? updateProduct.mutate() : createProduct.mutate();
+                      }}
+                      disabled={createProduct.isPending || updateProduct.isPending}
                       className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-white font-bold text-sm bg-green-600 hover:bg-green-700 disabled:opacity-50">
                       {(createProduct.isPending || updateProduct.isPending) ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                       {editingProduct ? 'Save Changes' : 'Add Product'}

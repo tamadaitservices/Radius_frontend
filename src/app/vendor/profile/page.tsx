@@ -8,6 +8,8 @@ import toast from 'react-hot-toast';
 import Link from 'next/link';
 import api from '@/lib/api';
 import { useVendorGuard } from '@/hooks/useVendorGuard';
+import FieldError, { fieldBorder } from '@/components/vendor/FieldError';
+import { passwordError, visibleError } from '@/lib/validators';
 
 const PLAN_COLORS: Record<string, string> = {
   FREE: 'bg-gray-100 text-gray-600',
@@ -22,6 +24,15 @@ export default function VendorProfilePage() {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [passwords, setPasswords] = useState({ current: '', next: '' });
+  const [submitted, setSubmitted] = useState(false);
+  const currentErr = passwords.current ? null : 'Enter your current password';
+  const nextErr = passwordError(passwords.next, 'New password') ?? (passwords.next === passwords.current ? 'New password must be different from the current one' : null);
+  const submit = () => {
+    setSubmitted(true);
+    const problem = currentErr ?? nextErr;
+    if (problem) { toast.error(problem); return; }
+    changePassword.mutate();
+  };
 
   const { data: vendor, isLoading } = useQuery({
     queryKey: ['vendor-profile'],
@@ -34,6 +45,7 @@ export default function VendorProfilePage() {
     onSuccess: () => {
       toast.success('Password changed.');
       setPasswords({ current: '', next: '' });
+      setSubmitted(false);
     },
     onError: (err: any) => toast.error(err.response?.data?.error || 'Failed to change password.'),
   });
@@ -108,27 +120,29 @@ export default function VendorProfilePage() {
               value={passwords.current}
               onChange={(e) => setPasswords((p) => ({ ...p, current: e.target.value }))}
               placeholder="Current password"
-              className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:outline-none text-sm pr-11"
+              className={`w-full px-4 py-2.5 border-2 ${fieldBorder(submitted ? currentErr : null)} rounded-xl focus:outline-none text-sm pr-11`}
             />
             <button type="button" onClick={() => setShowCurrent((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
               {showCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
+          <FieldError message={submitted ? currentErr : null} />
           <div className="relative">
             <input
               type={showNew ? 'text' : 'password'}
               value={passwords.next}
               onChange={(e) => setPasswords((p) => ({ ...p, next: e.target.value }))}
               placeholder="New password (min 8 characters)"
-              className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:outline-none text-sm pr-11"
+              className={`w-full px-4 py-2.5 border-2 ${fieldBorder(visibleError(nextErr, passwords.next, submitted))} rounded-xl focus:outline-none text-sm pr-11`}
             />
             <button type="button" onClick={() => setShowNew((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
               {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
+          <FieldError message={visibleError(nextErr, passwords.next, submitted)} />
           <button
-            onClick={() => changePassword.mutate()}
-            disabled={passwords.current.length < 1 || passwords.next.length < 8 || changePassword.isPending}
+            onClick={submit}
+            disabled={changePassword.isPending}
             className="w-full py-2.5 rounded-xl text-white font-bold text-sm disabled:opacity-50"
             style={{ backgroundColor: 'var(--ry-green)' }}
           >
