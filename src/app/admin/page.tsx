@@ -510,6 +510,24 @@ export default function AdminPage() {
     },
   });
 
+  const updateUser = useMutation({
+    mutationFn: async ({ id, ...body }: { id: string; name?: string; isBlocked?: boolean }) => api.patch(`/api/admin/users/${id}`, body),
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: ['admin-users'] });
+      toast.success(v.isBlocked === true ? 'Customer blocked.' : v.isBlocked === false ? 'Customer unblocked.' : 'Customer updated.');
+    },
+    onError: (err: any) => toast.error(err.response?.data?.error || 'Update failed.'),
+  });
+
+  const deleteUser = useMutation({
+    mutationFn: async (id: string) => api.delete(`/api/admin/users/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-users'] });
+      toast.success('Customer deleted.');
+    },
+    onError: (err: any) => toast.error(err.response?.data?.error || 'Delete failed.'),
+  });
+
   const deleteBanner = useMutation({
     mutationFn: async (id: string) => api.delete(`/api/admin/banners/${id}`),
     onSuccess: () => {
@@ -1477,18 +1495,48 @@ export default function AdminPage() {
                       const q = userSearch.toLowerCase();
                       return u.name?.toLowerCase().includes(q) || u.phone?.includes(q);
                     }).map((u: any) => (
-                    <div key={u.id} className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex items-center gap-4">
+                    <div key={u.id} className={`bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex items-center gap-4 flex-wrap ${u.isBlocked ? 'opacity-70' : ''}`}>
                       <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
                         style={{ background: '#3b82f6' }}>
                         {(u.name ?? u.phone)?.[0] ?? '?'}
                       </div>
                       <div className="flex-1">
-                        <p className="font-bold text-gray-900 text-sm">{u.name ?? 'Anonymous'}</p>
-                        <p className="text-xs text-gray-500">+91 {u.phone}</p>
+                        <p className="font-bold text-gray-900 text-sm">
+                          {u.name ?? 'Anonymous'}
+                          {u.isBlocked && <span className="ml-2 text-xs font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-600">Blocked</span>}
+                        </p>
+                        <p className="text-xs text-gray-500">{u.phone ? `+91 ${u.phone}` : u.email ?? '—'}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-gray-400">{u._count?.reservations ?? 0} reservations</p>
                         <p className="text-xs text-gray-400">{u._count?.reviews ?? 0} reviews</p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => {
+                            const n = prompt('Customer name', u.name ?? '');
+                            if (n !== null && n.trim()) updateUser.mutate({ id: u.id, name: n.trim() });
+                          }}
+                          className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50"
+                        >
+                          <Pencil size={13} /> Edit
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (u.isBlocked || confirm(`Block ${u.name ?? 'this customer'}? They will be signed out of the app.`)) {
+                              updateUser.mutate({ id: u.id, isBlocked: !u.isBlocked });
+                            }
+                          }}
+                          className={`px-3 py-1.5 text-xs font-bold border rounded-lg ${u.isBlocked ? 'border-green-200 text-green-700 hover:bg-green-50' : 'border-orange-200 text-orange-600 hover:bg-orange-50'}`}
+                        >
+                          {u.isBlocked ? 'Unblock' : 'Block'}
+                        </button>
+                        <button
+                          onClick={() => { if (confirm(`Permanently delete ${u.name ?? 'this customer'}? This cannot be undone.`)) deleteUser.mutate(u.id); }}
+                          className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border border-red-200 text-red-500 rounded-lg hover:bg-red-50"
+                        >
+                          <Trash2 size={13} /> Delete
+                        </button>
                       </div>
                     </div>
                   ))
