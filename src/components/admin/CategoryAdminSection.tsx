@@ -6,9 +6,19 @@ import { Loader2, Tags, Pencil, Trash2, ToggleLeft, ToggleRight, CalendarCheck, 
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
 
+type Module = 'shops' | 'preowned' | 'places' | 'food';
+
+const MODULES: { key: Module; label: string }[] = [
+  { key: 'shops', label: 'Shops' },
+  { key: 'preowned', label: 'Resale' },
+  { key: 'places', label: 'Places' },
+  { key: 'food', label: 'Food' },
+];
+
 interface CategoryRow {
   id: string;
   key: string;
+  module: Module;
   label: string;
   icon: string;
   sortOrder: number;
@@ -20,13 +30,14 @@ const EMPTY_FORM = { key: '', label: '', icon: '🏪', sortOrder: '' };
 
 export default function CategoryAdminSection() {
   const qc = useQueryClient();
+  const [module, setModule] = useState<Module>('shops');
   const [form, setForm] = useState(EMPTY_FORM);
   const [editing, setEditing] = useState<CategoryRow | null>(null);
   const [editForm, setEditForm] = useState(EMPTY_FORM);
 
   const { data: categories, isLoading } = useQuery({
-    queryKey: ['admin-categories'],
-    queryFn: async () => (await api.get('/api/categories/admin/all')).data as CategoryRow[],
+    queryKey: ['admin-categories', module],
+    queryFn: async () => (await api.get('/api/categories/admin/all', { params: { module } })).data as CategoryRow[],
   });
 
   const invalidate = () => {
@@ -36,6 +47,7 @@ export default function CategoryAdminSection() {
 
   const createCategory = useMutation({
     mutationFn: async () => api.post('/api/categories/admin', {
+      module,
       key: form.key,
       label: form.label,
       icon: form.icon || undefined,
@@ -96,10 +108,23 @@ export default function CategoryAdminSection() {
 
   return (
     <div className="space-y-5">
+      {/* Module picker — each module has its own category list */}
+      <div className="flex gap-2 overflow-x-auto">
+        {MODULES.map((m) => (
+          <button
+            key={m.key}
+            onClick={() => { setModule(m.key); setEditing(null); }}
+            className={`px-4 py-2 rounded-xl text-sm font-bold border-2 whitespace-nowrap transition-colors ${module === m.key ? 'bg-green-600 border-green-600 text-white' : 'bg-white border-gray-200 text-gray-600 hover:border-green-600'}`}
+          >
+            {m.label}
+          </button>
+        ))}
+      </div>
+
       {/* Create form */}
       <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
         <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <Tags size={18} className="text-blue-500" /> Add New Category
+          <Tags size={18} className="text-blue-500" /> Add New {MODULES.find((m) => m.key === module)?.label} Category
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
           <input
@@ -139,7 +164,7 @@ export default function CategoryAdminSection() {
 
       {/* List */}
       <div>
-        <h3 className="font-bold text-gray-700 mb-3 text-sm">Categories ({categories?.length ?? 0})</h3>
+        <h3 className="font-bold text-gray-700 mb-3 text-sm">{MODULES.find((m) => m.key === module)?.label} categories ({categories?.length ?? 0})</h3>
         {isLoading ? (
           <div className="flex justify-center py-12"><Loader2 className="animate-spin text-green-600" size={28} /></div>
         ) : !categories?.length ? (
@@ -183,21 +208,21 @@ export default function CategoryAdminSection() {
                         {!c.isActive && (
                           <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white bg-gray-400">Hidden</span>
                         )}
-                        {!c.reservationEnabled && (
+                        {module === 'shops' && !c.reservationEnabled && (
                           <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white bg-red-400">Reservations off</span>
                         )}
                       </div>
                       <p className="text-xs text-gray-400 mt-0.5">Sort order {c.sortOrder}</p>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <button
+                      {module === 'shops' && <button
                         onClick={() => toggleReservation.mutate({ id: c.id, reservationEnabled: !c.reservationEnabled })}
                         disabled={toggleReservation.isPending}
                         className="p-2 rounded-lg text-gray-500 hover:bg-gray-100"
                         title={c.reservationEnabled ? 'Disable reservations for this category' : 'Enable reservations for this category'}
                       >
                         {c.reservationEnabled ? <CalendarCheck size={18} className="text-blue-600" /> : <CalendarX size={18} className="text-red-400" />}
-                      </button>
+                      </button>}
                       <button
                         onClick={() => toggleActive.mutate({ id: c.id, isActive: !c.isActive })}
                         disabled={toggleActive.isPending}
@@ -210,7 +235,7 @@ export default function CategoryAdminSection() {
                         <Pencil size={14} />
                       </button>
                       <button
-                        onClick={() => { if (window.confirm(`Delete "${c.label}"? Shops using it must be reassigned first.`)) deleteCategory.mutate(c.id); }}
+                        onClick={() => { if (window.confirm(`Delete "${c.label}"? Anything using it must be reassigned first.`)) deleteCategory.mutate(c.id); }}
                         className="p-2 rounded-lg text-red-400 hover:bg-red-50"
                         title="Delete"
                       >

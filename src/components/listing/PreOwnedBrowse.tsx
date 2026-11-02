@@ -10,13 +10,13 @@ import RadiusMapControl from '@/components/home/RadiusMapControl';
 import { useLocation } from '@/hooks/useLocation';
 import { useAuthStore } from '@/store/auth';
 import { useRadiusStore } from '@/store/radius';
-import { LISTING_CATEGORY_ICONS, LISTING_CATEGORY_LABELS } from '@/lib/utils';
+import { useCategories } from '@/hooks/useCategories';
 import PromoBanners from '@/components/home/PromoBanners';
-
-const CATEGORIES = Object.keys(LISTING_CATEGORY_LABELS);
 
 export default function PreOwnedBrowse() {
   const { location, loading } = useLocation();
+  const { categories: categoryRows, labels: CATEGORY_LABELS, icons: CATEGORY_ICONS } = useCategories('preowned');
+  const CATEGORIES = categoryRows.map((c) => c.key);
   const { user } = useAuthStore();
   const { radiusKm } = useRadiusStore();
   const isVendor = (user as any)?.type === 'vendor';
@@ -94,8 +94,8 @@ export default function PreOwnedBrowse() {
             className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold border transition-colors"
             style={category === c ? { backgroundColor: 'var(--brand)', borderColor: 'var(--brand)', color: 'var(--on-brand)' } : { background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}
           >
-            <span>{LISTING_CATEGORY_ICONS[c]}</span>
-            {LISTING_CATEGORY_LABELS[c]}
+            <span>{CATEGORY_ICONS[c]}</span>
+            {CATEGORY_LABELS[c]}
           </button>
         ))}
       </div>

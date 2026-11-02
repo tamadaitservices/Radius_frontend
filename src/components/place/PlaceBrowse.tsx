@@ -8,10 +8,7 @@ import PlaceCard from '@/components/place/PlaceCard';
 import RadiusMapControl from '@/components/home/RadiusMapControl';
 import { useLocation } from '@/hooks/useLocation';
 import { useRadiusStore } from '@/store/radius';
-import {
-  PLACE_CATEGORY_ICONS, PLACE_CATEGORY_LABELS,
-  FOOD_CATEGORY_ICONS, FOOD_CATEGORY_LABELS,
-} from '@/lib/utils';
+import { useCategories } from '@/hooks/useCategories';
 import PromoBanners from '@/components/home/PromoBanners';
 
 interface Props {
@@ -23,8 +20,7 @@ export default function PlaceBrowse({ type }: Props) {
   const { radiusKm } = useRadiusStore();
   const [category, setCategory] = useState<string | null>(null);
 
-  const icons = type === 'FOOD' ? FOOD_CATEGORY_ICONS : PLACE_CATEGORY_ICONS;
-  const labels = type === 'FOOD' ? FOOD_CATEGORY_LABELS : PLACE_CATEGORY_LABELS;
+  const { icons, labels } = useCategories(type === 'FOOD' ? 'food' : 'places');
   const categories = Object.keys(labels);
   const accent = 'var(--brand)';
   const Icon = type === 'FOOD' ? UtensilsCrossed : Landmark;

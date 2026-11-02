@@ -1,7 +1,8 @@
 'use client';
 
 import GlassCard, { Pill } from '@/components/ui/GlassCard';
-import { formatDistance, PLACE_CATEGORY_ICONS, PLACE_CATEGORY_LABELS, FOOD_CATEGORY_ICONS, FOOD_CATEGORY_LABELS } from '@/lib/utils';
+import { formatDistance } from '@/lib/utils';
+import { useCategories } from '@/hooks/useCategories';
 
 interface PlaceCardProps {
   place: {
@@ -19,8 +20,7 @@ interface PlaceCardProps {
 }
 
 export default function PlaceCard({ place, index = 0 }: PlaceCardProps) {
-  const icons = place.type === 'FOOD' ? FOOD_CATEGORY_ICONS : PLACE_CATEGORY_ICONS;
-  const labels = place.type === 'FOOD' ? FOOD_CATEGORY_LABELS : PLACE_CATEGORY_LABELS;
+  const { icons, labels } = useCategories(place.type === 'FOOD' ? 'food' : 'places');
   const meta = [typeof place.distance === 'number' ? formatDistance(place.distance) : null, place.area]
     .filter(Boolean)
     .join(' · ');

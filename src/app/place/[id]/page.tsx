@@ -6,15 +6,15 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Phone, MapPin, Clock, Loader2 } from 'lucide-react';
 import api from '@/lib/api';
-import {
-  PLACE_CATEGORY_ICONS, PLACE_CATEGORY_LABELS,
-  FOOD_CATEGORY_ICONS, FOOD_CATEGORY_LABELS,
-} from '@/lib/utils';
+import { useCategories } from '@/hooks/useCategories';
 
 export default function PlaceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
 
+  // Hooks must run before the early returns below, so load both module lists and pick after.
+  const placeCats = useCategories('places');
+  const foodCats = useCategories('food');
   const { data: place, isLoading } = useQuery({
     queryKey: ['place', id],
     queryFn: async () => {
@@ -34,8 +34,7 @@ export default function PlaceDetailPage({ params }: { params: Promise<{ id: stri
   if (!place) return <div className="text-center py-20 text-gray-500">Not found.</div>;
 
   const isFood = place.type === 'FOOD';
-  const icons = isFood ? FOOD_CATEGORY_ICONS : PLACE_CATEGORY_ICONS;
-  const labels = isFood ? FOOD_CATEGORY_LABELS : PLACE_CATEGORY_LABELS;
+  const { icons, labels } = isFood ? foodCats : placeCats;
   const accent = 'var(--brand)';
   const images: string[] = place.images || [];
 

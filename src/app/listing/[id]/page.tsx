@@ -7,7 +7,8 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Phone, Loader2, User } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import { formatPrice, LISTING_CATEGORY_ICONS, LISTING_CATEGORY_LABELS, LISTING_CONDITION_LABELS } from '@/lib/utils';
+import { formatPrice, LISTING_CONDITION_LABELS } from '@/lib/utils';
+import { useCategories } from '@/hooks/useCategories';
 import { useAuthStore } from '@/store/auth';
 import ContactRequestModal from '@/components/listing/ContactRequestModal';
 
@@ -18,6 +19,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const [requestingContact, setRequestingContact] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
 
+  const { icons: CATEGORY_ICONS, labels: CATEGORY_LABELS } = useCategories('preowned');
   const { data: listing, isLoading } = useQuery({
     queryKey: ['listing', id],
     queryFn: async () => {
@@ -56,7 +58,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
               <Image src={images[activeImage]} alt={listing.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" priority />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center text-7xl">
-                {LISTING_CATEGORY_ICONS[listing.category] || '📦'}
+                {CATEGORY_ICONS[listing.category] || '📦'}
               </div>
             )}
             {listing.status === 'SOLD' && (
@@ -96,8 +98,8 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
             )}
 
             <div className="flex items-center gap-1.5 text-sm text-gray-500 mt-3">
-              <span>{LISTING_CATEGORY_ICONS[listing.category]}</span>
-              <span>{LISTING_CATEGORY_LABELS[listing.category]}</span>
+              <span>{CATEGORY_ICONS[listing.category]}</span>
+              <span>{CATEGORY_LABELS[listing.category] || listing.category}</span>
               <span>•</span>
               <span>{listing.area}, {listing.city}</span>
             </div>

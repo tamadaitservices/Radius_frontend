@@ -6,10 +6,7 @@ import Image from 'next/image';
 import { Loader2, Landmark, UtensilsCrossed, CheckCircle, XCircle, Pencil, Trash2, ImagePlus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import {
-  PLACE_CATEGORY_ICONS, PLACE_CATEGORY_LABELS,
-  FOOD_CATEGORY_ICONS, FOOD_CATEGORY_LABELS,
-} from '@/lib/utils';
+import { useCategories } from '@/hooks/useCategories';
 
 interface Props {
   type: 'PLACE' | 'FOOD';
@@ -29,8 +26,7 @@ export default function PlaceAdminSection({ type }: Props) {
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [uploadingId, setUploadingId] = useState<string | null>(null);
 
-  const icons = type === 'FOOD' ? FOOD_CATEGORY_ICONS : PLACE_CATEGORY_ICONS;
-  const labels = type === 'FOOD' ? FOOD_CATEGORY_LABELS : PLACE_CATEGORY_LABELS;
+  const { icons, labels } = useCategories(type === 'FOOD' ? 'food' : 'places');
   const categories = Object.keys(labels);
   const Icon = type === 'FOOD' ? UtensilsCrossed : Landmark;
   const label = type === 'FOOD' ? 'Food' : 'Place';

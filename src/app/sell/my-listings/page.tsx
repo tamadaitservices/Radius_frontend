@@ -6,10 +6,10 @@ import Image from 'next/image';
 import { Pencil, Trash2, Loader2, Camera, Check, X as XIcon, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
-import { formatPrice, LISTING_CATEGORY_LABELS, LISTING_CONDITION_LABELS } from '@/lib/utils';
+import { formatPrice, LISTING_CONDITION_LABELS } from '@/lib/utils';
+import { useCategories } from '@/hooks/useCategories';
 import { useCustomerGuard } from '@/hooks/useCustomerGuard';
 
-const CATEGORIES = Object.keys(LISTING_CATEGORY_LABELS);
 const CONDITIONS = Object.keys(LISTING_CONDITION_LABELS);
 
 interface Listing {
@@ -28,6 +28,8 @@ interface Listing {
 
 function EditForm({ listing, onDone }: { listing: Listing; onDone: () => void }) {
   const qc = useQueryClient();
+  const { categories: categoryRows, labels: CATEGORY_LABELS } = useCategories('preowned');
+  const CATEGORIES = categoryRows.map((c) => c.key);
   const [form, setForm] = useState({
     title: listing.title, description: listing.description ?? '', price: listing.price.toString(),
     category: listing.category, condition: listing.condition, area: listing.area,
@@ -60,7 +62,7 @@ function EditForm({ listing, onDone }: { listing: Listing; onDone: () => void })
       </div>
       <div className="grid grid-cols-2 gap-2">
         <select value={form.category} onChange={set('category')} className="w-full px-3 py-2 border-2 border-gray-200 rounded-2xl text-sm focus:border-[var(--brand)] focus:outline-none">
-          {CATEGORIES.map((c) => <option key={c} value={c}>{LISTING_CATEGORY_LABELS[c]}</option>)}
+          {CATEGORIES.map((c) => <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>)}
         </select>
         <select value={form.condition} onChange={set('condition')} className="w-full px-3 py-2 border-2 border-gray-200 rounded-2xl text-sm focus:border-[var(--brand)] focus:outline-none">
           {CONDITIONS.map((c) => <option key={c} value={c}>{LISTING_CONDITION_LABELS[c]}</option>)}
