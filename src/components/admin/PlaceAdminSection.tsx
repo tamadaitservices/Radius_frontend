@@ -7,6 +7,7 @@ import { Loader2, Landmark, UtensilsCrossed, CheckCircle, XCircle, Pencil, Trash
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { useCategories } from '@/hooks/useCategories';
+import GooglePlacesImport from '@/components/admin/GooglePlacesImport';
 
 interface Props {
   type: 'PLACE' | 'FOOD';
@@ -180,6 +181,8 @@ export default function PlaceAdminSection({ type }: Props) {
 
   return (
     <div className="space-y-5">
+      <GooglePlacesImport type={type} icons={icons} labels={labels} onImported={invalidate} />
+
       {/* Bulk import */}
       <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
         <h2 className="font-bold text-gray-900 mb-1 flex items-center gap-2">
