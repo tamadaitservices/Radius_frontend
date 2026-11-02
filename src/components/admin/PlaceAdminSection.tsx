@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { useCategories } from '@/hooks/useCategories';
 import GooglePlacesImport from '@/components/admin/GooglePlacesImport';
+import LocationPicker, { PickedLocation } from '@/components/admin/LocationPicker';
 
 interface Props {
   type: 'PLACE' | 'FOOD';
@@ -147,6 +148,21 @@ export default function PlaceAdminSection({ type }: Props) {
 
   const inputCls = 'px-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:border-green-600 focus:outline-none text-gray-800';
 
+  // Map/search picks always set the coordinates; a search result also fills address and area,
+  // and name/category only when they're still empty.
+  const pickInto = (setF: (fn: (prev: typeof EMPTY_FORM) => typeof EMPTY_FORM) => void) => (l: PickedLocation) =>
+    setF((p) => ({
+      ...p,
+      latitude: String(l.latitude),
+      longitude: String(l.longitude),
+      ...(l.name ? {
+        name: p.name || l.name,
+        address: l.address || p.address,
+        area: l.area || p.area,
+        category: p.category || (l.suggestedCategory && categories.includes(l.suggestedCategory) ? l.suggestedCategory : ''),
+      } : {}),
+    }));
+
   const FormFields = ({ f, setF }: { f: typeof EMPTY_FORM; setF: (fn: (prev: typeof EMPTY_FORM) => typeof EMPTY_FORM) => void }) => (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <select value={f.category} onChange={(e) => setF((p) => ({ ...p, category: e.target.value }))} className={inputCls}>
@@ -220,6 +236,7 @@ export default function PlaceAdminSection({ type }: Props) {
         <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
           <Icon size={18} className="text-blue-500" /> Add New {label}
         </h2>
+        <LocationPicker type={type} latitude={form.latitude} longitude={form.longitude} onPick={pickInto(setForm)} />
         <FormFields f={form} setF={setForm} />
         <button
           onClick={() => createPlace.mutate()}
@@ -266,6 +283,7 @@ export default function PlaceAdminSection({ type }: Props) {
                       </div>
                       <span className="text-xs font-semibold text-gray-500">{p.images?.[0] ? 'Change photo' : 'Add photo'}</span>
                     </label>
+                    <LocationPicker type={type} latitude={editForm.latitude} longitude={editForm.longitude} onPick={pickInto(setEditForm)} />
                     <FormFields f={editForm} setF={setEditForm} />
                     <div className="flex gap-2">
                       <button
